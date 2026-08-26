@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "npx concurrently \"npm run dev:frontend\" \"npm run dev:api\"",
+    "dev": "npx concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "cd frontend && npm run dev",
-    "dev:api": "cd api && node index.js",
-    "install:all": "npm install && cd frontend && npm install && cd ../api && npm install",
-    "start": "node api/index.js"
+    "dev:backend": "cd backend && node index.js",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "start": "node backend/index.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
