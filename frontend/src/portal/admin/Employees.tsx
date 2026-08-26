@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
-import { Check, X, ShieldAlert, FileText, User } from 'lucide-react';
+import { Check, X, ShieldAlert, FileText, User, Trash2 } from 'lucide-react';
 
 export default function Employees() {
   const [activeEmployees, setActiveEmployees] = useState<any[]>([]);
@@ -94,6 +94,21 @@ export default function Employees() {
       if (error) throw error;
       toast.success('Salary updated');
     } catch (error: any) { toast.error(error.message); }
+  };
+
+  const deleteEmployee = async (id: string) => {
+    if (!window.confirm("Are you sure you want to remove this employee? This action cannot be undone.")) return;
+    
+    try {
+      // Delete the employee profile. (Note: Supabase auth user remains, but profile is removed)
+      const { error } = await supabase.from('employee_profiles').delete().eq('id', id);
+      if (error) throw error;
+      toast.success("Employee removed successfully.");
+      fetchData();
+    } catch (error: any) {
+      toast.error("Could not delete employee. (They might have active attendance/payroll records).");
+      console.error(error);
+    }
   };
 
   return (
@@ -217,15 +232,24 @@ export default function Employees() {
                       )}
                     </td>
                     <td className="p-4">
-                      {emp.status === 'ACTIVE' || emp.is_approved ? (
-                        <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/20">
-                          Active
-                        </span>
-                      ) : (
-                        <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/20">
-                          Rejected
-                        </span>
-                      )}
+                      <div className="flex items-center gap-3">
+                        {emp.status === 'ACTIVE' || emp.is_approved ? (
+                          <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/20">
+                            Active
+                          </span>
+                        ) : (
+                          <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/20">
+                            Rejected
+                          </span>
+                        )}
+                        <button 
+                          onClick={() => deleteEmployee(emp.id)}
+                          className="p-2 text-red-500/70 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                          title="Remove Employee"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
