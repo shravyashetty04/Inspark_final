@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const { createClient } = require('@supabase/supabase-js');
 const nodemailer = require('nodemailer');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
 // Initialize Supabase Admin Client
@@ -74,12 +74,14 @@ function generatePassword(fullName) {
 }
 
 // 1. PUBLIC ONBOARDING SUBMISSION
-router.post('/register', upload.single('id_proof'), async (req, res) => {
+router.post('/register', async (req, res) => {
   try {
-    const { full_name, email, dob, emergency_contact, permanent_address, current_address } = req.body;
-    const file = req.file;
+    const { 
+      full_name, email, dob, emergency_contact, permanent_address, current_address,
+      id_proof_base64, id_proof_name, id_proof_type
+    } = req.body;
 
-    if (!file) return res.status(400).json({ error: 'ID Proof is required.' });
+    if (!id_proof_base64) return res.status(400).json({ error: 'ID Proof is required.' });
     if (!email) return res.status(400).json({ error: 'Email is required.' });
 
     // Check if email already exists in pending or active
@@ -89,13 +91,17 @@ router.post('/register', upload.single('id_proof'), async (req, res) => {
     const { data: existingActive } = await supabaseAdmin.from('employee_profiles').select('id').eq('email', email).single();
     if (existingActive) return res.status(400).json({ error: 'This email is already an active employee.' });
 
+    // Decode Base64 string into a Buffer
+    const base64Data = id_proof_base64.split(',')[1];
+    const fileBuffer = Buffer.from(base64Data, 'base64');
+
     // Upload File to Supabase Storage
-    const sanitizedName = file.originalname.replace(/[^a-zA-Z0-9.\-]/g, '_');
+    const sanitizedName = (id_proof_name || 'document').replace(/[^a-zA-Z0-9.\-]/g, '_');
     const fileName = `temp_${Date.now()}_${sanitizedName}`;
     const { data: uploadData, error: uploadError } = await supabaseAdmin
       .storage
       .from('id_proofs')
-      .upload(fileName, file.buffer, { contentType: file.mimetype });
+      .upload(fileName, fileBuffer, { contentType: id_proof_type || 'application/pdf' });
 
     if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
 

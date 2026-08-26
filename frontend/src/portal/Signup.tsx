@@ -33,8 +33,8 @@ export default function Signup() {
         return;
       }
       
-      if (selectedFile.size > 5 * 1024 * 1024) {
-        toast.error('File size must be less than 5MB.');
+      if (selectedFile.size > 3 * 1024 * 1024) {
+        toast.error('File size must be less than 3MB (Vercel Limit).');
         return;
       }
       
@@ -53,33 +53,48 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      const data = new FormData();
-      data.append('full_name', formData.fullName);
-      data.append('email', formData.email);
-      data.append('dob', formData.dob);
-      data.append('emergency_contact', formData.emergencyContact);
-      data.append('permanent_address', formData.permanentAddress);
-      data.append('current_address', formData.currentAddress);
-      data.append('id_proof', file);
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        try {
+          const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              full_name: formData.fullName,
+              email: formData.email,
+              dob: formData.dob,
+              emergency_contact: formData.emergencyContact,
+              permanent_address: formData.permanentAddress,
+              current_address: formData.currentAddress,
+              id_proof_base64: reader.result,
+              id_proof_name: file.name,
+              id_proof_type: file.type
+            })
+          });
 
-      // We send this to our custom Node backend
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        body: data,
-      });
+          const result = await response.json();
 
-      const result = await response.json();
+          if (!response.ok) {
+            throw new Error(result.error || 'Registration failed');
+          }
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Registration failed');
-      }
-
-      toast.success(result.message || 'Registration successful! Check your email for login credentials.', { duration: 6000 });
-      navigate('/portal/login');
+          toast.success(result.message || 'Registration successful! Check your email for login credentials.', { duration: 6000 });
+          navigate('/portal/login');
+        } catch (err: any) {
+          toast.error(err.message || 'An unexpected error occurred.');
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      reader.onerror = () => {
+        toast.error("Failed to read file.");
+        setLoading(false);
+      };
 
     } catch (err: any) {
-      toast.error(err.message || 'An unexpected error occurred. Is the backend running?');
-    } finally {
+      toast.error(err.message || 'An unexpected error occurred.');
       setLoading(false);
     }
   };
