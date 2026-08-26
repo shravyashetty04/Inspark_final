@@ -33,8 +33,8 @@ export default function Signup() {
         return;
       }
       
-      if (selectedFile.size > 3 * 1024 * 1024) {
-        toast.error('File size must be less than 3MB (Vercel Limit).');
+      if (selectedFile.size > 2 * 1024 * 1024) {
+        toast.error('File size must be less than 2MB to ensure safe upload.');
         return;
       }
       

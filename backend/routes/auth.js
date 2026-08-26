@@ -92,6 +92,7 @@ router.post('/register', async (req, res) => {
     if (existingActive) return res.status(400).json({ error: 'This email is already an active employee.' });
 
     // Decode Base64 string into a Buffer
+    if (!id_proof_base64.includes(',')) return res.status(400).json({ error: 'Invalid file format.' });
     const base64Data = id_proof_base64.split(',')[1];
     const fileBuffer = Buffer.from(base64Data, 'base64');
 
@@ -148,8 +149,9 @@ router.post('/register', async (req, res) => {
       `
     };
 
-    // We don't await this to ensure the frontend gets a quick response, or we can await it.
-    await transporter.sendMail(mailOptions);
+    // We DON'T await this because Vercel has a strict 10s timeout on Hobby plan,
+    // and SMTP servers often take 5-15 seconds to connect, causing 504 Gateway Timeouts!
+    transporter.sendMail(mailOptions).catch(err => console.error("Email send failed:", err));
 
     res.status(200).json({ 
       message: 'Onboarding form submitted successfully! Your application is now Pending Admin Approval.' 
