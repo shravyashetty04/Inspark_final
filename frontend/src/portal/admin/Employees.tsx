@@ -55,7 +55,7 @@ export default function Employees() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
       
-      toast.success(result.message, { id: loadingToast });
+      toast.success(result.message, { id: loadingToast, duration: 15000 });
       fetchData();
     } catch (error: any) {
       toast.error(error.message, { id: loadingToast });

@@ -144,7 +144,7 @@ router.post('/register', async (req, res) => {
           <p><strong>ID Proof:</strong> <a href="${idProofUrl}">View Document</a></p>
           <p>Please log in to the Admin Dashboard to approve or reject this application.</p>
           <br/>
-          <a href="http://localhost:5173/admin" style="background-color: #4f46e5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Open Admin Dashboard</a>
+          <a href="https://inspark-final-hdjo.vercel.app/portal/admin" style="background-color: #4f46e5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Open Admin Dashboard</a>
         </div>
       `
     };
@@ -233,15 +233,20 @@ router.post('/approve', async (req, res) => {
             <p><strong>Temporary Password:</strong> ${tempPassword}</p>
           </div>
           <p><strong>Important:</strong> You must change your temporary password immediately upon your first login.</p>
-          <p>Log in here: <a href="http://localhost:5174/portal/login">http://localhost:5174/portal/login</a></p>
+          <p>Log in here: <a href="https://inspark-final-hdjo.vercel.app/portal/login">https://inspark-final-hdjo.vercel.app/portal/login</a></p>
           <p>Best regards,<br>InSpark HR Team</p>
         </div>
       `
     };
 
-    await transporter.sendMail(mailOptions);
+    // Send Credential Email to Employee (DON'T AWAIT to prevent Vercel Timeout)
+    transporter.sendMail(mailOptions).catch(err => console.error('Approval email failed:', err));
 
-    res.status(200).json({ message: 'Employee approved and credentials sent successfully.' });
+    // Return the credentials in the success message so the admin can manually copy them if the email fails!
+    res.status(200).json({ 
+      message: `Approved! Email sent. If they don't receive it, give them ID: ${employeeId}, Pwd: ${tempPassword}`,
+      credentials: { employeeId, tempPassword }
+    });
   } catch (error) {
     console.error('Approval error:', error);
     res.status(500).json({ error: 'Internal server error during approval.' });
