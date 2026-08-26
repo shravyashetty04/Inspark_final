@@ -20,6 +20,7 @@ export default function Employees() {
       const { data: emps, error: empError } = await supabase
         .from('employee_profiles')
         .select('*')
+        .neq('status', 'INACTIVE') // Filter out removed employees
         .order('created_at', { ascending: false });
 
       if (empError) throw empError;
@@ -100,8 +101,8 @@ export default function Employees() {
     if (!window.confirm("Are you sure you want to remove this employee? This action cannot be undone.")) return;
     
     try {
-      // Delete the employee profile. (Note: Supabase auth user remains, but profile is removed)
-      const { error } = await supabase.from('employee_profiles').delete().eq('id', id);
+      // Soft delete: Update status to INACTIVE so they lose access but their payroll/attendance history remains intact.
+      const { error } = await supabase.from('employee_profiles').update({ status: 'INACTIVE', is_approved: false }).eq('id', id);
       if (error) throw error;
       toast.success("Employee removed successfully.");
       fetchData();
