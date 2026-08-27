@@ -630,6 +630,9 @@ export default function ChatPage() {
         )}
       </div>
     </div>
+  );
+}
+
 function ChatVideoConference({ initialVideo, onToggleChat, isChatOpen }: { initialVideo: boolean, onToggleChat: () => void, isChatOpen: boolean }) {
   const tracks = useTracks(
     [
