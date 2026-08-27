@@ -44,36 +44,37 @@ class RingtoneGenerator {
     const playRing = () => {
       if (!this.isPlaying || !this.ctx) return;
       
-      const osc1 = this.ctx.createOscillator();
-      const osc2 = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-
-      osc1.type = 'sine';
-      osc1.frequency.value = 440;
-      
-      osc2.type = 'sine';
-      osc2.frequency.value = 480;
-
-      osc1.connect(gain);
-      osc2.connect(gain);
-      gain.connect(this.ctx.destination);
-
       const now = this.ctx.currentTime;
       
-      gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(0.5, now + 0.1);
+      // Teams-like melody: F4 (349Hz), Bb4 (466Hz), D5 (587Hz), F5 (698Hz)
+      const notes = [349.23, 466.16, 587.33, 698.46];
+      const duration = 0.15; // fast pluck
+      const gap = 0.05;
       
-      gain.gain.setValueAtTime(0.5, now + 1.9);
-      gain.gain.linearRampToValueAtTime(0, now + 2.0);
-
-      osc1.start(now);
-      osc2.start(now);
-      osc1.stop(now + 2.1);
-      osc2.stop(now + 2.1);
+      notes.forEach((freq, i) => {
+        const osc = this.ctx!.createOscillator();
+        const gain = this.ctx!.createGain();
+        
+        osc.type = 'sine'; // Sine wave for a marimba/bell-like purity
+        osc.frequency.value = freq;
+        
+        osc.connect(gain);
+        gain.connect(this.ctx!.destination);
+        
+        const startTime = now + i * (duration + gap);
+        
+        // Envelope: sudden attack, exponential decay (plucky)
+        gain.gain.setValueAtTime(0, startTime);
+        gain.gain.linearRampToValueAtTime(0.8, startTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+        
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      });
     };
 
     playRing();
-    this.intervalId = setInterval(playRing, 4000);
+    this.intervalId = setInterval(playRing, 2500);
   }
 
   stop() {
