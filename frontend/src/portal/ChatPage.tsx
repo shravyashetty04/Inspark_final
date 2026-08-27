@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { useCall } from './CallContext';
+import { useLocation } from 'react-router-dom';
 import { supabase, ChatChannel, ChatMessage, EmployeeProfile } from '../lib/supabase';
 import { X, Users, Search, Send, Plus, MessageSquare, Phone, Video, Mic, MicOff, Camera, CameraOff, MonitorUp, Loader2 } from 'lucide-react';
 import { LiveKitRoom, GridLayout, ParticipantTile, RoomAudioRenderer, useTracks, useLocalParticipant } from '@livekit/components-react';
@@ -24,6 +25,7 @@ export default function ChatPage() {
   const [view, setView] = useState<'channels' | 'new_dm' | 'new_group'>('channels');
   const [groupName, setGroupName] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<EmployeeProfile[]>([]);
+  const location = useLocation();
   
   // Call State from Context
   const { activeCall, callToken, startCall, endCall } = useCall();
@@ -67,6 +69,19 @@ export default function ChatPage() {
       loadUsers();
     }
   }, [profile]);
+
+  // Auto-select channel if navigating from incoming call or active call exists
+  useEffect(() => {
+    if (channels.length > 0) {
+      const targetChannelId = location.state?.channelId || activeCall?.channelId;
+      if (targetChannelId && (!activeChannel || activeChannel.id !== targetChannelId)) {
+        const chan = channels.find(c => c.id === targetChannelId);
+        if (chan) {
+          setActiveChannel(chan);
+        }
+      }
+    }
+  }, [channels, location.state, activeCall, activeChannel]);
 
   useEffect(() => {
     if (activeChannel && profile) {
