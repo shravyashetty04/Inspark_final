@@ -11,9 +11,11 @@ export default function Dashboard() {
   const [todayRecord, setTodayRecord] = useState<any>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [workLocation, setWorkLocation] = useState<'WFO' | 'WFH'>('WFO');
+  const [upcomingHolidays, setUpcomingHolidays] = useState<any[]>([]);
 
   useEffect(() => {
     checkAttendanceStatus();
+    fetchUpcomingHolidays();
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, [profile]);
@@ -36,6 +38,19 @@ export default function Dashboard() {
         setWorkLocation(data.work_location || 'WFO');
       }
     }
+  };
+
+  const fetchUpcomingHolidays = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const { data } = await supabase
+      .from('government_holidays')
+      .select('*')
+      .eq('is_active', true)
+      .gte('date', today)
+      .order('date', { ascending: true })
+      .limit(3);
+    
+    if (data) setUpcomingHolidays(data);
   };
 
   const handleCheckIn = async () => {
@@ -235,6 +250,23 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+
+        {/* Upcoming Holidays */}
+        {upcomingHolidays.length > 0 && (
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-xl shadow-xl lg:col-span-2">
+            <h2 className="text-xl font-bold text-white mb-6">Upcoming Government Holidays</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {upcomingHolidays.map(holiday => (
+                <div key={holiday.id} className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-2xl p-5 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-bl-full -mr-4 -mt-4"></div>
+                  <p className="text-indigo-400 font-bold mb-1">{format(new Date(holiday.date), 'dd MMM yyyy')}</p>
+                  <h3 className="text-white font-medium text-lg mb-2">{holiday.name}</h3>
+                  <p className="text-slate-400 text-sm line-clamp-2">{holiday.description || 'Public Holiday'}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         
       </div>
     </div>

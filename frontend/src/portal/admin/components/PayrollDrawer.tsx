@@ -234,6 +234,7 @@ export default function PayrollDrawer({ isOpen, onClose, employeeData, payrollRe
                  <div className="text-slate-400 space-y-1">
                     <p>Calendar Days: <span className="text-white">{payrollRecord.calendar_days || 30}</span></p>
                     <p>Paid Weekly Offs: <span className="text-white">{payrollRecord.weekly_off_days || 0}</span></p>
+                    <p>Paid Govt Holidays: <span className="text-white">{payrollRecord.holiday_days || 0}</span></p>
                     <p>Working Days: <span className="text-white">{payrollRecord.working_days}</span></p>
                     <p>Present/Leave: <span className="text-white">{payrollRecord.present_days} / {payrollRecord.paid_leaves}</span></p>
                  </div>

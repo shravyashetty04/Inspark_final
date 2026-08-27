@@ -49,12 +49,30 @@ export default function LeaveManagement() {
     const start = new Date(formData.startDate);
     const end = new Date(formData.endDate);
     
-    // Calculate days (simple calculation, excluding weekends logic can be added later)
+    // Calculate days
     const diffTime = Math.abs(end.getTime() - start.getTime());
     let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+    // Fetch overlapping active government holidays
+    const { data: holidays } = await supabase
+      .from('government_holidays')
+      .select('date')
+      .eq('is_active', true)
+      .gte('date', formData.startDate)
+      .lte('date', formData.endDate);
+
+    const holidayCount = holidays?.length || 0;
+    diffDays = Math.max(0, diffDays - holidayCount);
+    
+    // If diffDays is 0 after holiday deduction, no need to apply
+    if (diffDays === 0) {
+      toast.error('The selected date range only contains government holidays.');
+      setLoading(false);
+      return;
+    }
     
     // If it's a single day, check if it's a half day based on time
-    if (diffDays === 1) {
+    if (diffDays === 1 && diffTime === 0) {
       const sTime = parseInt(formData.startTime.replace(':', ''));
       const eTime = parseInt(formData.endTime.replace(':', ''));
       if (eTime - sTime <= 430) { // Approx 4.5 hours

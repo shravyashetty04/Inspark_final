@@ -16,6 +16,7 @@ import AdminDashboard from './admin/Dashboard';
 import Employees from './admin/Employees';
 import CompanyAttendance from './admin/CompanyAttendance';
 import LeaveApprovals from './admin/LeaveApprovals';
+import Holidays from './admin/Holidays';
 import Payroll from './admin/Payroll';
 
 import { CallProvider } from './CallContext';
@@ -44,6 +45,7 @@ export default function PortalApp() {
               <Route path="/admin/employees" element={<Employees />} />
               <Route path="/admin/attendance" element={<CompanyAttendance />} />
               <Route path="/admin/leaves" element={<LeaveApprovals />} />
+              <Route path="/admin/holidays" element={<Holidays />} />
               <Route path="/admin/payroll" element={<Payroll />} />
             </Route>
           </Route>

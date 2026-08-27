@@ -73,6 +73,10 @@ export default function Payslip({ payrollData, onClose }: PayslipProps) {
                 <span className="font-semibold">{record.weekly_off_days || 0}</span>
               </div>
               <div className="grid grid-cols-2 text-sm">
+                <span className="text-slate-500">Paid Govt Holidays:</span>
+                <span className="font-semibold">{record.holiday_days || 0}</span>
+              </div>
+              <div className="grid grid-cols-2 text-sm">
                 <span className="text-slate-500">Working Days:</span>
                 <span className="font-semibold">{record.working_days}</span>
               </div>

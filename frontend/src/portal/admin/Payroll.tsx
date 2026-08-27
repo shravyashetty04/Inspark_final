@@ -79,14 +79,39 @@ export default function Payroll() {
       const startDate = format(dateForMonth, 'yyyy-MM-dd');
       const endDate = format(new Date(parseInt(year), parseInt(month) - 1, calendarDays), 'yyyy-MM-dd');
 
+      // Fetch active government holidays for the month
+      const { data: holidays } = await supabase
+        .from('government_holidays')
+        .select('date')
+        .eq('is_active', true)
+        .gte('date', startDate)
+        .lte('date', endDate);
+
+      const holidayList = (holidays || []).map(h => h.date);
+
       const allDaysInMonth = eachDayOfInterval({ start: new Date(startDate), end: new Date(endDate) });
       let weeklyOffCount = 0;
+      let paidHolidayCount = 0;
+      
       allDaysInMonth.forEach(day => {
-        if (isSaturday(day) && companySettings.saturday_policy === 'weekly_off') weeklyOffCount++;
-        if (isSunday(day) && companySettings.sunday_policy === 'weekly_off') weeklyOffCount++;
+        const dateStr = format(day, 'yyyy-MM-dd');
+        let isWeeklyOff = false;
+        
+        if (isSaturday(day) && companySettings.saturday_policy === 'weekly_off') {
+          weeklyOffCount++;
+          isWeeklyOff = true;
+        }
+        if (isSunday(day) && companySettings.sunday_policy === 'weekly_off') {
+          weeklyOffCount++;
+          isWeeklyOff = true;
+        }
+        
+        if (!isWeeklyOff && holidayList.includes(dateStr)) {
+          paidHolidayCount++;
+        }
       });
       
-      const expectedWorkingDays = calendarDays - weeklyOffCount;
+      const expectedWorkingDays = calendarDays - weeklyOffCount - paidHolidayCount;
 
       const newRecords = [];
 
@@ -123,8 +148,8 @@ export default function Payroll() {
         const paidLeaves = leaves?.reduce((sum, l) => sum + l.days, 0) || 0;
         const presentDays = presentCount || 0;
         
-        // Include weekly offs as "paid" days automatically
-        const totalEffectiveDays = presentDays + paidLeaves + weeklyOffCount;
+        // Include weekly offs and government holidays as "paid" days automatically
+        const totalEffectiveDays = presentDays + paidLeaves + weeklyOffCount + paidHolidayCount;
         
         // Calculate LOP (Loss of Pay) based on calendar days, ensuring it never goes below 0
         const lopDays = Math.max(0, calendarDays - totalEffectiveDays);
@@ -144,6 +169,7 @@ export default function Payroll() {
           payroll_month: selectedMonth,
           calendar_days: calendarDays,
           weekly_off_days: weeklyOffCount,
+          holiday_days: paidHolidayCount,
           working_days: expectedWorkingDays,
           present_days: presentDays,
           paid_leaves: paidLeaves,

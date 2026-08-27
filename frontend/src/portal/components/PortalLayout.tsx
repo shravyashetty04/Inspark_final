@@ -40,6 +40,7 @@ export default function PortalLayout() {
     { name: 'Employees', path: '/portal/admin/employees', icon: Users },
     { name: 'Company Attendance', path: '/portal/admin/attendance', icon: CalendarCheck },
     { name: 'Leave Approvals', path: '/portal/admin/leaves', icon: CalendarOff },
+    { name: 'Government Holidays', path: '/portal/admin/holidays', icon: Calendar },
     { name: 'Payroll & Salary', path: '/portal/admin/payroll', icon: IndianRupee },
     { name: '← Back to My Portal', path: '/portal/dashboard', icon: LayoutDashboard },
   ];
