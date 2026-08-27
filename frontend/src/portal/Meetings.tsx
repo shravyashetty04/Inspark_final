@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { LiveKitRoom, GridLayout, ParticipantTile, RoomAudioRenderer, useTracks, useLocalParticipant } from '@livekit/components-react';
+import { LiveKitRoom, GridLayout, ParticipantTile, RoomAudioRenderer, useTracks, useLocalParticipant, Chat } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import '@livekit/components-styles';
-import { Video, ArrowRight, UserPlus, Loader2, Mic, MicOff, Camera, CameraOff, MonitorUp, PhoneOff } from 'lucide-react';
+import { Video, ArrowRight, UserPlus, Loader2, Mic, MicOff, Camera, CameraOff, MonitorUp, MessageSquare, X } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
 
@@ -163,6 +163,7 @@ export default function Meetings() {
 }
 
 function MyVideoConference() {
+  const [showChat, setShowChat] = useState(false);
   const tracks = useTracks(
     [
       { source: Track.Source.Camera, withPlaceholder: true },
@@ -172,20 +173,31 @@ function MyVideoConference() {
   );
   
   return (
-    <div className="flex flex-col h-full w-full">
-      <div className="flex-1 p-2 w-full h-full overflow-hidden">
-        <GridLayout tracks={tracks} style={{ height: '100%' }}>
-          <ParticipantTile />
-        </GridLayout>
+    <div className="flex flex-row h-full w-full relative">
+      <div className="flex flex-col flex-1 h-full w-full">
+        <div className="flex-1 p-2 w-full h-full overflow-hidden">
+          <GridLayout tracks={tracks} style={{ height: '100%' }}>
+            <ParticipantTile />
+          </GridLayout>
+        </div>
+        <div className="shrink-0 bg-[#0B0D21] py-4 border-t border-white/10 z-50">
+          <CustomControlBar onToggleChat={() => setShowChat(!showChat)} isChatOpen={showChat} />
+        </div>
       </div>
-      <div className="shrink-0 bg-[#0B0D21] py-4 border-t border-white/10 z-50">
-        <CustomControlBar />
-      </div>
+      {showChat && (
+        <div className="w-80 md:w-96 flex flex-col bg-[#111] border-l border-white/10 h-full absolute right-0 top-0 bottom-0 z-40 md:relative overflow-hidden">
+          <div className="p-3 border-b border-white/10 flex justify-between items-center md:hidden bg-[#1a1b3b]">
+            <span className="text-white font-medium">Meeting Chat</span>
+            <button onClick={() => setShowChat(false)} className="text-gray-400 hover:text-white"><X size={20}/></button>
+          </div>
+          <Chat className="flex-1 lk-chat" />
+        </div>
+      )}
     </div>
   );
 }
 
-function CustomControlBar() {
+function CustomControlBar({ onToggleChat, isChatOpen }: { onToggleChat: () => void, isChatOpen: boolean }) {
   const { localParticipant } = useLocalParticipant();
   const [isMicOn, setIsMicOn] = useState(true);
   const [isCamOn, setIsCamOn] = useState(true);
@@ -242,6 +254,16 @@ function CustomControlBar() {
         title="Share Screen"
       >
         <MonitorUp size={24} />
+      </button>
+      
+      <button 
+        onClick={onToggleChat}
+        className={`p-4 rounded-full flex items-center justify-center transition-colors ${
+          isChatOpen ? 'bg-purple-500 hover:bg-purple-600 text-white' : 'bg-white/10 hover:bg-white/20 text-white'
+        }`}
+        title="Toggle Chat"
+      >
+        <MessageSquare size={24} />
       </button>
     </div>
   );
