@@ -27,31 +27,33 @@ function GlobalFloatingVideoInner({ activeCall, endCall }: { activeCall: any, en
   const { localParticipant } = useLocalParticipant();
   // Priority: First remote participant > Local participant
   const targetParticipant = participants[0] || localParticipant;
+  const containerRef = React.useRef<HTMLDivElement>(null);
 
-  const handlePiP = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  React.useEffect(() => {
+    let intervalId: any;
     
-    // Find the video element rendered by LiveKit within this container
-    const videoContainer = (e.target as HTMLElement).closest('.floating-video-container');
-    const videoEl = videoContainer?.querySelector('video');
-    
-    if (videoEl) {
-       try {
-         if (document.pictureInPictureElement) {
-           await document.exitPictureInPicture();
-         } else {
-           await videoEl.requestPictureInPicture();
-           toast.success('Video popped out! You can now switch tabs or apps.');
-         }
-       } catch (error: any) {
-         console.error('PiP failed', error);
-         toast.error('Picture-in-Picture failed: ' + error.message);
-       }
-    } else {
-       toast.error('No video feed available to pop out.');
-    }
-  };
+    const attemptPiP = async () => {
+      if (!containerRef.current) return;
+      const videoEl = containerRef.current.querySelector('video');
+      
+      // Only attempt if video exists, has loaded data, and not already in PiP
+      if (videoEl && videoEl.readyState >= 1 && !document.pictureInPictureElement) {
+        try {
+          await videoEl.requestPictureInPicture();
+          clearInterval(intervalId);
+        } catch (error) {
+          console.error('Auto PiP failed:', error);
+          // If it fails (e.g. due to user gesture requirement), stop polling
+          clearInterval(intervalId);
+        }
+      }
+    };
+
+    // Poll until the video element is ready
+    intervalId = setInterval(attemptPiP, 500);
+
+    return () => clearInterval(intervalId);
+  }, [targetParticipant]);
 
   if (!targetParticipant) return null;
 
@@ -64,7 +66,10 @@ function GlobalFloatingVideoInner({ activeCall, endCall }: { activeCall: any, en
   const returnLink = activeCall.isMeeting ? `/portal/meetings?room=${activeCall.roomName}` : '/portal/chat';
 
   return (
-    <div className="fixed bottom-6 right-6 w-80 h-48 bg-black rounded-xl overflow-hidden shadow-2xl z-[9999] border-2 border-indigo-500/50 floating-video-container group transition-transform hover:scale-105">
+    <div 
+      ref={containerRef}
+      className="fixed bottom-6 right-6 w-80 h-48 bg-black rounded-xl overflow-hidden shadow-2xl z-[9999] border-2 border-indigo-500/50 floating-video-container group transition-transform hover:scale-105"
+    >
       <ParticipantTile trackRef={trackRef} style={{ width: '100%', height: '100%' }} />
       
       {/* Overlay Controls on Hover */}
@@ -80,14 +85,6 @@ function GlobalFloatingVideoInner({ activeCall, endCall }: { activeCall: any, en
           >
             <Maximize2 size={16} /> Return to Full Screen
           </Link>
-          
-          <button 
-            onClick={handlePiP}
-            className="w-full bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
-            title="Pop out video to show over other apps (Desktop PiP)"
-          >
-            <ExternalLink size={16} /> Pop Out (Desktop)
-          </button>
           
           <button 
             onClick={(e) => { e.preventDefault(); endCall(); }}
