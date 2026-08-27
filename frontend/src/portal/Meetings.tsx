@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { LiveKitRoom, GridLayout, ParticipantTile, RoomAudioRenderer, useTracks, useLocalParticipant, Chat } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import '@livekit/components-styles';
-import { Video, ArrowRight, UserPlus, Loader2, Mic, MicOff, Camera, CameraOff, MonitorUp, MessageSquare, X } from 'lucide-react';
+import { Video, ArrowRight, UserPlus, Loader2, Mic, MicOff, Camera, CameraOff, MonitorUp, MessageSquare, X, Link as LinkIcon, Calendar, Hash } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
 
@@ -58,6 +58,19 @@ export default function Meetings() {
     }
   };
 
+  const [showJoinInput, setShowJoinInput] = useState(false);
+
+  const createMeetingLink = () => {
+    const randomName = 'InSpark-' + Math.random().toString(36).substring(2, 10);
+    navigator.clipboard.writeText(randomName);
+    toast.success('Meeting link copied! You can now share it.');
+    setRoomName(randomName);
+  };
+
+  const scheduleMeeting = () => {
+    toast('Scheduling is coming soon!', { icon: '📅' });
+  };
+
   if (inMeeting && token) {
     return (
       <div className="h-[650px] w-full bg-[#111] rounded-xl overflow-hidden relative border border-white/10 flex flex-col shadow-2xl">
@@ -109,54 +122,57 @@ export default function Meetings() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4">
+    <div className="max-w-5xl mx-auto py-12 px-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Meeting Rooms</h1>
-        <p className="text-slate-400">Join a scheduled meeting or start an instant huddle securely via LiveKit.</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Start Instant Meeting */}
-        <div className="bg-white/5 border border-white/10 p-8 rounded-2xl flex flex-col hover:bg-white/10 transition-colors">
-          <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-6">
-            <Video className="text-emerald-400" size={24} />
-          </div>
-          <h2 className="text-xl font-bold text-white mb-3">Instant Huddle</h2>
-          <p className="text-slate-400 mb-8 flex-1">Start a secure, randomized video meeting directly in the portal.</p>
+        <h1 className="text-2xl font-bold text-white mb-6">Meet</h1>
+        
+        <div className="flex flex-col md:flex-row items-center gap-4">
           <button 
-            onClick={startRandomMeeting}
-            disabled={loading}
-            className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+            onClick={createMeetingLink}
+            className="w-full md:w-auto px-8 py-4 bg-[#5458B3] hover:bg-[#4a4d9e] text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-3"
           >
-            {loading ? <Loader2 className="animate-spin" size={20} /> : 'Start New Meeting'}
+            <LinkIcon size={20} />
+            Create a meeting link
+          </button>
+          
+          <button 
+            onClick={scheduleMeeting}
+            className="w-full md:w-auto px-8 py-4 bg-[#2A2B2D] border border-[#3E3F42] hover:bg-[#343538] text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-3"
+          >
+            <Calendar size={20} className="text-pink-400" />
+            Schedule a meeting
+          </button>
+          
+          <button 
+            onClick={() => setShowJoinInput(!showJoinInput)}
+            className="w-full md:w-auto px-8 py-4 bg-[#2A2B2D] border border-[#3E3F42] hover:bg-[#343538] text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-3"
+          >
+            <Hash size={20} className="text-blue-400" />
+            Join with a meeting ID
           </button>
         </div>
-
-        {/* Join Meeting */}
-        <div className="bg-white/5 border border-white/10 p-8 rounded-2xl flex flex-col hover:bg-white/10 transition-colors">
-          <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center mb-6">
-            <UserPlus className="text-indigo-400" size={24} />
+        
+        {showJoinInput && (
+          <div className="mt-6 p-6 bg-[#1A1C1E] border border-white/5 rounded-xl max-w-md animate-in slide-in-from-top-4 fade-in duration-200">
+            <h3 className="text-white font-medium mb-4">Enter Meeting ID</h3>
+            <form onSubmit={handleJoinSubmit} className="flex gap-3">
+              <input 
+                type="text" 
+                placeholder="e.g. InSpark-Daily-Standup"
+                value={roomName}
+                onChange={(e) => setRoomName(e.target.value)}
+                className="flex-1 bg-black/30 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-[#5458B3]"
+              />
+              <button 
+                type="submit"
+                disabled={!roomName.trim() || loading}
+                className="px-6 py-2.5 bg-[#5458B3] hover:bg-[#4a4d9e] disabled:opacity-50 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
+              >
+                {loading ? <Loader2 className="animate-spin" size={18} /> : 'Join'}
+              </button>
+            </form>
           </div>
-          <h2 className="text-xl font-bold text-white mb-3">Join a Room</h2>
-          <p className="text-slate-400 mb-8 flex-1">Have a room name? Enter it below to jump straight into the call.</p>
-          
-          <form onSubmit={handleJoinSubmit} className="flex gap-3 mt-auto">
-            <input 
-              type="text" 
-              placeholder="e.g. InSpark-Daily-Standup"
-              value={roomName}
-              onChange={(e) => setRoomName(e.target.value)}
-              className="flex-1 bg-black/30 border border-white/10 rounded-xl px-4 text-white focus:outline-none focus:border-indigo-500"
-            />
-            <button 
-              type="submit"
-              disabled={!roomName.trim() || loading}
-              className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-white font-bold rounded-xl transition-colors flex items-center gap-2"
-            >
-              {loading ? <Loader2 className="animate-spin" size={18} /> : <>Join <ArrowRight size={18} /></>}
-            </button>
-          </form>
-        </div>
+        )}
       </div>
     </div>
   );
