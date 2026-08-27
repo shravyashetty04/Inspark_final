@@ -10,7 +10,8 @@ import {
   Menu,
   X,
   IndianRupee,
-  Video
+  Video,
+  MessageSquare
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -26,6 +27,7 @@ export default function PortalLayout() {
     { name: 'My Attendance', path: '/portal/attendance', icon: CalendarCheck },
     { name: 'Leave Management', path: '/portal/leaves', icon: CalendarOff },
     { name: 'Meetings', path: '/portal/meetings', icon: Video },
+    { name: 'Messages', path: '/portal/chat', icon: MessageSquare },
   ];
 
   const adminItems = [

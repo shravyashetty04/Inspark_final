@@ -9,6 +9,7 @@ import Attendance from './Attendance';
 import LeaveManagement from './LeaveManagement';
 import ChangePassword from './ChangePassword';
 import Meetings from './Meetings';
+import ChatPage from './ChatPage';
 
 // Admin Components
 import AdminDashboard from './admin/Dashboard';
@@ -32,6 +33,7 @@ export default function PortalApp() {
             <Route path="/attendance" element={<Attendance />} />
             <Route path="/leaves" element={<LeaveManagement />} />
             <Route path="/meetings" element={<Meetings />} />
+            <Route path="/chat" element={<ChatPage />} />
 
             {/* Admin Routes */}
             <Route element={<AdminRoute />}>

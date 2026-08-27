@@ -52,3 +52,27 @@ export interface LeaveRequest {
   approved_by: string | null;
   created_at: string;
 }
+
+export type ChannelType = 'direct' | 'group';
+
+export interface ChatChannel {
+  id: string;
+  name: string | null;
+  type: ChannelType;
+  created_at: string;
+  created_by: string | null;
+}
+
+export interface ChatMember {
+  channel_id: string;
+  employee_id: string;
+  joined_at: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  channel_id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+}
