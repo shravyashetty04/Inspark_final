@@ -205,7 +205,7 @@ export default function Dashboard() {
           <div className="space-y-6">
             <div className="bg-black/20 border border-white/10 rounded-2xl p-5 flex justify-between items-center">
               <div>
-                <p className="text-slate-400 text-sm mb-1">Check In Time</p>
+                <p className="text-slate-400 text-sm mb-1">Log In Time</p>
                 <p className="text-white font-medium text-lg">
                   {todayRecord?.check_in ? format(new Date(todayRecord.check_in), 'hh:mm a') : '--:--'}
                 </p>
@@ -217,7 +217,7 @@ export default function Dashboard() {
 
             <div className="bg-black/20 border border-white/10 rounded-2xl p-5 flex justify-between items-center">
               <div>
-                <p className="text-slate-400 text-sm mb-1">Check Out Time</p>
+                <p className="text-slate-400 text-sm mb-1">Log Out Time</p>
                 <p className="text-white font-medium text-lg">
                   {todayRecord?.check_out ? format(new Date(todayRecord.check_out), 'hh:mm a') : '--:--'}
                 </p>
