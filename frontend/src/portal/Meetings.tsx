@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LiveKitRoom, GridLayout, ParticipantTile, RoomAudioRenderer, useTracks, useLocalParticipant, Chat } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import '@livekit/components-styles';
@@ -45,6 +45,18 @@ export default function Meetings() {
     }
   };
 
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const roomParam = searchParams.get('room');
+    if (roomParam && profile) {
+      setRoomName(roomParam);
+      joinLiveKitRoom(roomParam);
+      
+      // Clean up URL to hide the room code
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [profile]);
+
   const startRandomMeeting = () => {
     const randomName = 'InSpark-' + Math.random().toString(36).substring(2, 10);
     setRoomName(randomName);
@@ -69,7 +81,8 @@ export default function Meetings() {
 
   const createMeetingLink = () => {
     const randomName = 'InSpark-' + Math.random().toString(36).substring(2, 10);
-    navigator.clipboard.writeText(randomName);
+    const meetingLink = `${window.location.origin}/portal/meetings?room=${randomName}`;
+    navigator.clipboard.writeText(meetingLink);
     toast.success('Meeting link copied! You can now share it.');
     setRoomName(randomName);
     setShowJoinInput(false);
@@ -95,17 +108,18 @@ export default function Meetings() {
     
     const randomName = 'InSpark-' + Math.random().toString(36).substring(2, 10);
     const dateObj = new Date(`${scheduleDate}T${scheduleTime}`);
-    const formattedDate = dateObj.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+    const meetingLink = `${window.location.origin}/portal/meetings?room=${randomName}`;
+    const dateOptions: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+    const dateString = dateObj.toLocaleDateString(undefined, dateOptions);
+    const timeString = dateObj.toLocaleTimeString(undefined, { timeStyle: 'short' });
     
-    const inviteText = `You have been invited to an InSpark Meeting.
+    const inviteText = `${profile?.full_name || 'A team member'} invited you to an InSpark Meeting:
 
-Title: ${scheduleTitle}
-Time: ${formattedDate}
+${scheduleTitle}
+${dateString}
+${timeString}
 
-To join the meeting:
-1. Log in to the InSpark Portal and go to the "Meet" page
-2. Click "Join with a meeting ID"
-3. Enter Room ID: ${randomName}`;
+Meeting link: ${meetingLink}`;
 
     setGeneratedInvite(inviteText);
   };
