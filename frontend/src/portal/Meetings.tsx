@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LiveKitRoom, GridLayout, ParticipantTile, RoomAudioRenderer, useTracks, useLocalParticipant, Chat, FocusLayout } from '@livekit/components-react';
+import { LiveKitRoom, GridLayout, ParticipantTile, useTracks, useLocalParticipant, Chat, FocusLayout } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import '@livekit/components-styles';
 import { Video, ArrowRight, UserPlus, Loader2, Mic, MicOff, Camera, CameraOff, MonitorUp, MessageSquare, X, Link as LinkIcon, Calendar, Hash } from 'lucide-react';
@@ -126,7 +126,6 @@ Meeting link: ${meetingLink}`;
         
         <div className="flex-1 w-full relative overflow-hidden bg-black">
           <MyVideoConference />
-          <RoomAudioRenderer />
         </div>
       </div>
     );

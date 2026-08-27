@@ -4,7 +4,7 @@ import { useCall } from './CallContext';
 import { useLocation } from 'react-router-dom';
 import { supabase, ChatChannel, ChatMessage, EmployeeProfile } from '../lib/supabase';
 import { X, Users, Search, Send, Plus, MessageSquare, Phone, Video, Mic, MicOff, Camera, CameraOff, MonitorUp, Loader2 } from 'lucide-react';
-import { LiveKitRoom, GridLayout, ParticipantTile, RoomAudioRenderer, useTracks, useLocalParticipant, FocusLayout } from '@livekit/components-react';
+import { LiveKitRoom, GridLayout, ParticipantTile, useTracks, useLocalParticipant, FocusLayout } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import '@livekit/components-styles';
 import toast from 'react-hot-toast';

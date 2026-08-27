@@ -3,7 +3,7 @@ import { useAuth } from './AuthContext';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { LiveKitRoom } from '@livekit/components-react';
+import { LiveKitRoom, RoomAudioRenderer } from '@livekit/components-react';
 import '@livekit/components-styles';
 
 export type CallType = 'audio' | 'video';
@@ -260,6 +260,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
           setCallToken(null);
         }}
       >
+        <RoomAudioRenderer />
         {children}
       </LiveKitRoom>
     </CallContext.Provider>

@@ -5,6 +5,23 @@ import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 export default function GlobalFloatingVideo({ activeCall, endCall }: { activeCall: any, endCall: () => void }) {
+  return (
+    <ErrorBoundary>
+      <GlobalFloatingVideoInner activeCall={activeCall} endCall={endCall} />
+    </ErrorBoundary>
+  );
+}
+
+class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: any}> {
+  constructor(props: any) { super(props); this.state = { hasError: false, error: null }; }
+  static getDerivedStateFromError(error: any) { return { hasError: true, error }; }
+  render() {
+    if (this.state.hasError) return <div className="fixed bottom-6 right-6 p-4 bg-red-500 text-white rounded-xl z-50 text-xs w-64 break-words">Error: {this.state.error?.message}</div>;
+    return this.props.children;
+  }
+}
+
+function GlobalFloatingVideoInner({ activeCall, endCall }: { activeCall: any, endCall: () => void }) {
   const participants = useRemoteParticipants();
   const { localParticipant } = useLocalParticipant();
   // Priority: First remote participant > Local participant
