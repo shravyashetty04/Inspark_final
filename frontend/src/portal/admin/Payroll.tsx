@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '../../lib/supabase';
-import { IndianRupee, Calculator, Download, User, Calendar, Search, Filter, AlertCircle, FileText, CheckCircle2, MoreHorizontal } from 'lucide-react';
-import { format } from 'date-fns';
+import { IndianRupee, Calculator, Download, User, Calendar, Search, Filter, AlertCircle, FileText, CheckCircle2, MoreHorizontal, Settings } from 'lucide-react';
+import { format, getDaysInMonth, eachDayOfInterval, isSaturday, isSunday } from 'date-fns';
 import toast from 'react-hot-toast';
 import PayrollDrawer from './components/PayrollDrawer';
 import Payslip from './components/Payslip';
@@ -20,7 +20,10 @@ export default function Payroll() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [payslipData, setPayslipData] = useState<any>(null);
 
-  const WORKING_DAYS = 30; // Defined by company policy
+  // Settings State
+  const [companySettings, setCompanySettings] = useState<any>({ saturday_policy: 'weekly_off', sunday_policy: 'weekly_off' });
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
 
   useEffect(() => {
     fetchPayrollData();
@@ -48,6 +51,17 @@ export default function Payroll() {
       if (recError) throw recError;
       setPayrollRecords(records || []);
 
+      // 3. Fetch Company Settings
+      const { data: settings } = await supabase
+        .from('company_settings')
+        .select('*')
+        .limit(1)
+        .single();
+        
+      if (settings) {
+        setCompanySettings(settings);
+      }
+
     } catch (err) {
       console.error('Error fetching payroll', err);
       toast.error('Failed to load payroll data');
@@ -60,8 +74,19 @@ export default function Payroll() {
     setProcessing(true);
     try {
       const [year, month] = selectedMonth.split('-');
-      const startDate = `${year}-${month}-01`;
-      const endDate = `${year}-${month}-31`;
+      const dateForMonth = new Date(parseInt(year), parseInt(month) - 1, 1);
+      const calendarDays = getDaysInMonth(dateForMonth);
+      const startDate = format(dateForMonth, 'yyyy-MM-dd');
+      const endDate = format(new Date(parseInt(year), parseInt(month) - 1, calendarDays), 'yyyy-MM-dd');
+
+      const allDaysInMonth = eachDayOfInterval({ start: new Date(startDate), end: new Date(endDate) });
+      let weeklyOffCount = 0;
+      allDaysInMonth.forEach(day => {
+        if (isSaturday(day) && companySettings.saturday_policy === 'weekly_off') weeklyOffCount++;
+        if (isSunday(day) && companySettings.sunday_policy === 'weekly_off') weeklyOffCount++;
+      });
+      
+      const expectedWorkingDays = calendarDays - weeklyOffCount;
 
       const newRecords = [];
 
@@ -97,14 +122,17 @@ export default function Payroll() {
 
         const paidLeaves = leaves?.reduce((sum, l) => sum + l.days, 0) || 0;
         const presentDays = presentCount || 0;
-        const totalEffectiveDays = presentDays + paidLeaves;
         
-        // Calculate LOP (Loss of Pay)
-        const lopDays = Math.max(0, WORKING_DAYS - totalEffectiveDays);
+        // Include weekly offs as "paid" days automatically
+        const totalEffectiveDays = presentDays + paidLeaves + weeklyOffCount;
+        
+        // Calculate LOP (Loss of Pay) based on calendar days, ensuring it never goes below 0
+        const lopDays = Math.max(0, calendarDays - totalEffectiveDays);
         
         // Calculate Earnings
         const grossSalary = structure.basic_salary + structure.hra + structure.allowances;
-        const dailyRate = grossSalary / WORKING_DAYS;
+        // Daily rate based on exact calendar days in the month
+        const dailyRate = grossSalary / calendarDays;
         const lopDeduction = lopDays * dailyRate;
         
         // Calculate Deductions
@@ -114,7 +142,9 @@ export default function Payroll() {
         const record = {
           employee_id: emp.id,
           payroll_month: selectedMonth,
-          working_days: WORKING_DAYS,
+          calendar_days: calendarDays,
+          weekly_off_days: weeklyOffCount,
+          working_days: expectedWorkingDays,
           present_days: presentDays,
           paid_leaves: paidLeaves,
           lop_days: lopDays,
@@ -153,6 +183,38 @@ export default function Payroll() {
       toast.error('Failed to process payroll');
     } finally {
       setProcessing(false);
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    setSavingSettings(true);
+    try {
+      // If companySettings.id is missing, we just insert.
+      // But we fetched it so it should have an id. If not, don't pass id so it inserts.
+      const payload: any = {
+        saturday_policy: companySettings.saturday_policy,
+        sunday_policy: companySettings.sunday_policy,
+        updated_at: new Date().toISOString()
+      };
+      if (companySettings.id) {
+        payload.id = companySettings.id;
+      }
+
+      const { data, error } = await supabase
+        .from('company_settings')
+        .upsert(payload)
+        .select()
+        .single();
+
+      if (error) throw error;
+      setCompanySettings(data);
+      toast.success('Company weekend settings updated!');
+      setIsSettingsOpen(false);
+    } catch (error) {
+      console.error('Error saving settings', error);
+      toast.error('Failed to save settings');
+    } finally {
+      setSavingSettings(false);
     }
   };
 
@@ -213,13 +275,19 @@ export default function Payroll() {
               type="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="bg-transparent text-white font-medium focus:outline-none"
-              style={{ colorScheme: 'dark' }}
+              className="bg-transparent border-none text-white focus:ring-0 cursor-pointer"
             />
           </div>
-          <button 
-            onClick={processPayroll} 
-            disabled={processing || loading}
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white hover:bg-white/10 transition-colors"
+          >
+            <Settings size={20} />
+            <span className="hidden md:inline">Settings</span>
+          </button>
+          <button
+            onClick={processPayroll}
+            disabled={processing || employees.length === 0}
             className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-semibold rounded-xl transition shadow-lg disabled:opacity-50"
           >
             <Calculator size={18} />
@@ -395,6 +463,60 @@ export default function Payroll() {
           payrollData={payslipData}
           onClose={() => setPayslipData(null)}
         />
+      )}
+
+      {/* Settings Modal */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-[#11133c] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+            <h3 className="text-xl font-bold text-white mb-6">Payroll Settings</h3>
+            
+            <div className="space-y-6 mb-8">
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-2">Saturday Policy</label>
+                <select
+                  value={companySettings.saturday_policy}
+                  onChange={(e) => setCompanySettings({...companySettings, saturday_policy: e.target.value})}
+                  className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                >
+                  <option value="weekly_off" className="bg-[#11133c]">Paid Weekly Off</option>
+                  <option value="working_day" className="bg-[#11133c]">Working Day</option>
+                </select>
+                <p className="text-xs text-slate-500 mt-2">If set to 'Paid Weekly Off', Saturdays are automatically counted as paid days.</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-2">Sunday Policy</label>
+                <select
+                  value={companySettings.sunday_policy}
+                  onChange={(e) => setCompanySettings({...companySettings, sunday_policy: e.target.value})}
+                  className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                >
+                  <option value="weekly_off" className="bg-[#11133c]">Paid Weekly Off</option>
+                  <option value="working_day" className="bg-[#11133c]">Working Day</option>
+                </select>
+                <p className="text-xs text-slate-500 mt-2">If set to 'Paid Weekly Off', Sundays are automatically counted as paid days.</p>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                onClick={() => setIsSettingsOpen(false)}
+                className="flex-1 px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveSettings}
+                disabled={savingSettings}
+                className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium hover:from-indigo-600 hover:to-purple-600 transition shadow-lg disabled:opacity-50"
+              >
+                {savingSettings ? 'Saving...' : 'Save Settings'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

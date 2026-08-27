@@ -231,13 +231,15 @@ export default function PayrollDrawer({ isOpen, onClose, employeeData, payrollRe
               
               {/* Attendance Summary */}
               <div className="bg-white/5 rounded-2xl p-4 text-sm flex justify-between items-center">
-                 <div className="text-slate-400">
+                 <div className="text-slate-400 space-y-1">
+                    <p>Calendar Days: <span className="text-white">{payrollRecord.calendar_days || 30}</span></p>
+                    <p>Paid Weekly Offs: <span className="text-white">{payrollRecord.weekly_off_days || 0}</span></p>
                     <p>Working Days: <span className="text-white">{payrollRecord.working_days}</span></p>
                     <p>Present/Leave: <span className="text-white">{payrollRecord.present_days} / {payrollRecord.paid_leaves}</span></p>
                  </div>
-                 <div className="text-right text-slate-400">
+                 <div className="text-right text-slate-400 flex flex-col justify-end">
                     <p>LOP Days</p>
-                    <p className="text-lg font-bold text-red-400">{payrollRecord.lop_days}</p>
+                    <p className="text-2xl font-bold text-red-400">{payrollRecord.lop_days}</p>
                  </div>
               </div>
             </div>
