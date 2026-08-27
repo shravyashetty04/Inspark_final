@@ -3,6 +3,7 @@ import { useRemoteParticipants, ParticipantTile, useLocalParticipant } from '@li
 import { ExternalLink, Maximize2, PhoneOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { Track } from 'livekit-client';
 
 export default function GlobalFloatingVideo({ activeCall, endCall }: { activeCall: any, endCall: () => void }) {
   return (
@@ -54,11 +55,17 @@ function GlobalFloatingVideoInner({ activeCall, endCall }: { activeCall: any, en
 
   if (!targetParticipant) return null;
 
+  const trackRef = {
+    participant: targetParticipant,
+    source: Track.Source.Camera,
+    publication: targetParticipant.getTrackPublication(Track.Source.Camera)
+  };
+
   const returnLink = activeCall.isMeeting ? `/portal/meetings?room=${activeCall.roomName}` : '/portal/chat';
 
   return (
     <div className="fixed bottom-6 right-6 w-80 h-48 bg-black rounded-xl overflow-hidden shadow-2xl z-[9999] border-2 border-indigo-500/50 floating-video-container group transition-transform hover:scale-105">
-      <ParticipantTile participant={targetParticipant} style={{ width: '100%', height: '100%' }} />
+      <ParticipantTile trackRef={trackRef} style={{ width: '100%', height: '100%' }} />
       
       {/* Overlay Controls on Hover */}
       <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-4">
