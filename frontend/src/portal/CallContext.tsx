@@ -25,6 +25,66 @@ interface CallContextType {
 
 const CallContext = createContext<CallContextType | undefined>(undefined);
 
+class RingtoneGenerator {
+  private ctx: AudioContext | null = null;
+  private intervalId: any = null;
+  private isPlaying = false;
+
+  play() {
+    if (this.isPlaying) return;
+    this.isPlaying = true;
+    
+    if (!this.ctx) {
+      this.ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    if (this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+
+    const playRing = () => {
+      if (!this.isPlaying || !this.ctx) return;
+      
+      const osc1 = this.ctx.createOscillator();
+      const osc2 = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc1.type = 'sine';
+      osc1.frequency.value = 440;
+      
+      osc2.type = 'sine';
+      osc2.frequency.value = 480;
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      const now = this.ctx.currentTime;
+      
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.5, now + 0.1);
+      
+      gain.gain.setValueAtTime(0.5, now + 1.9);
+      gain.gain.linearRampToValueAtTime(0, now + 2.0);
+
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + 2.1);
+      osc2.stop(now + 2.1);
+    };
+
+    playRing();
+    this.intervalId = setInterval(playRing, 4000);
+  }
+
+  stop() {
+    this.isPlaying = false;
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
+  }
+}
+
 export function CallProvider({ children }: { children: React.ReactNode }) {
   const { profile } = useAuth();
   const navigate = useNavigate();
@@ -33,17 +93,16 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
   const [activeCall, setActiveCall] = useState<CallDetails | null>(null);
   const [callToken, setCallToken] = useState<string | null>(null);
   
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const ringtoneRef = useRef<RingtoneGenerator | null>(null);
   const signalingChannelRef = useRef<any>(null);
 
   // Initialize ringtone
   useEffect(() => {
-    audioRef.current = new Audio('https://actions.google.com/sounds/v1/alarms/phone_ringing.ogg');
-    audioRef.current.loop = true;
+    ringtoneRef.current = new RingtoneGenerator();
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
+      if (ringtoneRef.current) {
+        ringtoneRef.current.stop();
+        ringtoneRef.current = null;
       }
     };
   }, []);
@@ -62,7 +121,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
         if (targetUserIds && targetUserIds.includes(profile.id)) {
           if (!activeCall && !incomingCall) {
             setIncomingCall(details as CallDetails);
-            audioRef.current?.play().catch(e => console.log('Audio autoplay prevented:', e));
+            ringtoneRef.current?.play();
           }
         }
       })
@@ -71,8 +130,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
         if (targetUserIds && targetUserIds.includes(profile.id)) {
           if (incomingCall?.channelId === channelId) {
             setIncomingCall(null);
-            audioRef.current?.pause();
-            if (audioRef.current) audioRef.current.currentTime = 0;
+            ringtoneRef.current?.stop();
             toast('Call missed', { icon: '📵' });
           }
         }
@@ -136,8 +194,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
       setActiveCall(incomingCall);
       setIncomingCall(null);
       
-      audioRef.current?.pause();
-      if (audioRef.current) audioRef.current.currentTime = 0;
+      ringtoneRef.current?.stop();
       
       // Navigate to chat page to show the active call
       navigate('/portal/chat', { state: { channelId: incomingCall.channelId } });
@@ -149,8 +206,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
 
   const rejectCall = () => {
     setIncomingCall(null);
-    audioRef.current?.pause();
-    if (audioRef.current) audioRef.current.currentTime = 0;
+    ringtoneRef.current?.stop();
   };
 
   const endCall = async () => {
