@@ -4,6 +4,7 @@ import {
   LayoutDashboard, 
   CalendarCheck, 
   CalendarOff, 
+  Calendar, 
   LogOut, 
   Users, 
   Settings,
