@@ -396,7 +396,7 @@ export default function ChatPage() {
                 onClick={() => setView('new_dm')}
                 className="flex-1 bg-white/5 hover:bg-white/10 text-white text-sm py-2 rounded-lg flex items-center justify-center gap-2 transition-colors"
               >
-                <Plus size={16} /> DM
+                <Plus size={16} /> Chat
               </button>
               <button 
                 onClick={() => { setView('new_group'); setSelectedUsers([]); setGroupName(''); setSearchQuery(''); }}
@@ -408,7 +408,7 @@ export default function ChatPage() {
             <div className="flex-1 overflow-y-auto p-2">
               {channels.length === 0 ? (
                 <div className="text-center text-gray-500 mt-10 text-sm">
-                  No conversations yet.<br/>Start a new DM or Group!
+                  No conversations yet.<br/>Start a new Chat or Group!
                 </div>
               ) : (
                 channels.map(channel => (
