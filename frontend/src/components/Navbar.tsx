@@ -86,26 +86,6 @@ export default function Navbar() {
           {/* CTA */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
             <a
-              href="/portal/login"
-              className="desktop-links"
-              style={{
-                padding: '9px 22px', borderRadius: '10px',
-                border: '1px solid rgba(192, 132, 252, 0.4)',
-                color: '#fff', fontSize: '13.5px', fontWeight: 700, textDecoration: 'none',
-                transition: 'all 0.2s ease',
-                whiteSpace: 'nowrap',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(192, 132, 252, 0.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
-              }}
-            >
-              Employee Login
-            </a>
-
-            <a
               href="#contact"
               className="desktop-links"
               style={{
@@ -171,17 +151,6 @@ export default function Navbar() {
               {link.label}
             </a>
           ))}
-          <a
-            href="/portal/login"
-            onClick={() => setMobileOpen(false)}
-            style={{
-              display: 'block', marginTop: '20px', padding: '14px', textAlign: 'center',
-              borderRadius: '10px', border: '1px solid rgba(192,132,252,0.4)',
-              color: '#fff', fontWeight: 700, textDecoration: 'none',
-            }}
-          >
-            Employee Login
-          </a>
           <a
             href="#contact"
             onClick={() => setMobileOpen(false)}
