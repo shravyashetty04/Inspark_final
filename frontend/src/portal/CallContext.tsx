@@ -34,6 +34,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
   const [callToken, setCallToken] = useState<string | null>(null);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const signalingChannelRef = useRef<any>(null);
 
   // Initialize ringtone
   useEffect(() => {
@@ -47,34 +48,42 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Listen for incoming calls via Supabase Broadcast
+  // Listen for incoming calls via global Supabase Broadcast
   useEffect(() => {
     if (!profile) return;
 
-    const channel = supabase.channel(`user:${profile.id}`);
+    const channel = supabase.channel('global-signaling');
+    signalingChannelRef.current = channel;
 
     channel
       .on('broadcast', { event: 'incoming-call' }, (payload) => {
-        const details = payload.payload as CallDetails;
-        // Don't ring if already in a call
-        if (!activeCall && !incomingCall) {
-          setIncomingCall(details);
-          audioRef.current?.play().catch(e => console.log('Audio autoplay prevented:', e));
+        const { targetUserIds, ...details } = payload.payload;
+        // If we are one of the targets, and not already in a call
+        if (targetUserIds && targetUserIds.includes(profile.id)) {
+          if (!activeCall && !incomingCall) {
+            setIncomingCall(details as CallDetails);
+            audioRef.current?.play().catch(e => console.log('Audio autoplay prevented:', e));
+          }
         }
       })
       .on('broadcast', { event: 'call-ended' }, (payload) => {
-        const { channelId } = payload.payload;
-        if (incomingCall?.channelId === channelId) {
-          setIncomingCall(null);
-          audioRef.current?.pause();
-          if (audioRef.current) audioRef.current.currentTime = 0;
-          toast('Call missed', { icon: '📵' });
+        const { channelId, targetUserIds } = payload.payload;
+        if (targetUserIds && targetUserIds.includes(profile.id)) {
+          if (incomingCall?.channelId === channelId) {
+            setIncomingCall(null);
+            audioRef.current?.pause();
+            if (audioRef.current) audioRef.current.currentTime = 0;
+            toast('Call missed', { icon: '📵' });
+          }
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Global signaling channel status:', status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
+      signalingChannelRef.current = null;
     };
   }, [profile, activeCall, incomingCall]);
 
@@ -100,11 +109,13 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
       
       // Ring others
       const otherMembers = memberIds.filter(id => id !== profile.id);
-      for (const memberId of otherMembers) {
-        await supabase.channel(`user:${memberId}`).send({
+      
+      if (otherMembers.length > 0 && signalingChannelRef.current) {
+        await signalingChannelRef.current.send({
           type: 'broadcast',
           event: 'incoming-call',
           payload: {
+            targetUserIds: otherMembers,
             channelId,
             callerId: profile.id,
             callerName: profile.full_name,
