@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
+import { useCall } from './CallContext';
 import { supabase, ChatChannel, ChatMessage, EmployeeProfile } from '../lib/supabase';
 import { X, Users, Search, Send, Plus, MessageSquare, Phone, Video, Mic, MicOff, Camera, CameraOff, MonitorUp, Loader2 } from 'lucide-react';
 import { LiveKitRoom, GridLayout, ParticipantTile, RoomAudioRenderer, useTracks, useLocalParticipant } from '@livekit/components-react';
@@ -24,12 +25,29 @@ export default function ChatPage() {
   const [groupName, setGroupName] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<EmployeeProfile[]>([]);
   
-  // Call State
-  const [inCall, setInCall] = useState(false);
-  const [callToken, setCallToken] = useState('');
-  const [callLoading, setCallLoading] = useState(false);
-  const [callType, setCallType] = useState<'audio' | 'video'>('video');
+  // Call State from Context
+  const { activeCall, callToken, startCall, endCall } = useCall();
   const serverUrl = import.meta.env.VITE_LIVEKIT_URL;
+  
+  // Local state for initiating a call to show spinner
+  const [callInitiating, setCallInitiating] = useState<boolean>(false);
+  const [initiatingType, setInitiatingType] = useState<'audio'|'video'|null>(null);
+
+  const handleCall = async (type: 'audio' | 'video') => {
+    if (!activeChannel || !profile) return;
+    setCallInitiating(true);
+    setInitiatingType(type);
+    try {
+      const { data } = await supabase.from('chat_members').select('employee_id').eq('channel_id', activeChannel.id);
+      const memberIds = data?.map(d => d.employee_id) || [];
+      const channelName = activeChannel.type === 'direct' ? profile.full_name || 'Colleague' : activeChannel.name || 'Group Chat';
+      
+      await startCall(activeChannel.id, type, memberIds, channelName);
+    } finally {
+      setCallInitiating(false);
+      setInitiatingType(null);
+    }
+  };
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -247,35 +265,7 @@ export default function ChatPage() {
     }
   };
 
-  const joinCall = async (type: 'audio' | 'video') => {
-    if (!profile || !activeChannel) return;
-    setCallType(type);
-    setCallLoading(true);
-    
-    try {
-      const response = await fetch('/api/meetings/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          roomName: `chat-${activeChannel.id}`,
-          participantName: profile.full_name || profile.email
-        })
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to get token');
-      }
-
-      setCallToken(data.token);
-      setInCall(true);
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
-      setCallLoading(false);
-    }
-  };
+  // The local joinCall function is no longer needed since we use handleCall which calls startCall in context.
 
   const createGroup = async () => {
     if (!profile || !groupName.trim() || selectedUsers.length === 0) return;
@@ -507,47 +497,44 @@ export default function ChatPage() {
               {/* Call Buttons */}
               <div className="flex items-center gap-2">
                 <button 
-                  onClick={() => joinCall('audio')}
-                  disabled={callLoading}
+                  onClick={() => handleCall('audio')}
+                  disabled={callInitiating || !!activeCall}
                   className="p-2 text-gray-400 hover:text-purple-400 bg-white/5 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50"
                   title="Audio Call"
                 >
-                  {callLoading && callType === 'audio' ? <Loader2 size={18} className="animate-spin" /> : <Phone size={18} />}
+                  {callInitiating && initiatingType === 'audio' ? <Loader2 size={18} className="animate-spin" /> : <Phone size={18} />}
                 </button>
                 <button 
-                  onClick={() => joinCall('video')}
-                  disabled={callLoading}
+                  onClick={() => handleCall('video')}
+                  disabled={callInitiating || !!activeCall}
                   className="p-2 text-gray-400 hover:text-purple-400 bg-white/5 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50"
                   title="Video Call"
                 >
-                  {callLoading && callType === 'video' ? <Loader2 size={18} className="animate-spin" /> : <Video size={18} />}
+                  {callInitiating && initiatingType === 'video' ? <Loader2 size={18} className="animate-spin" /> : <Video size={18} />}
                 </button>
               </div>
             </div>
 
-            {inCall && callToken ? (
+            {activeCall?.channelId === activeChannel.id && callToken ? (
               <div className="flex-1 w-full bg-black relative flex flex-col border-b border-white/10">
                 <div className="absolute top-4 right-4 z-50">
                   <button 
-                    onClick={() => { setInCall(false); setCallToken(''); }}
+                    onClick={endCall}
                     className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors shadow-lg"
                   >
                     End Call
                   </button>
                 </div>
                 <LiveKitRoom
-                  video={callType === 'video'}
+                  video={activeCall.type === 'video'}
                   audio={true}
                   token={callToken}
                   serverUrl={serverUrl}
                   data-lk-theme="default"
                   style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-                  onDisconnected={() => {
-                    setInCall(false);
-                    setCallToken('');
-                  }}
+                  onDisconnected={endCall}
                 >
-                  <ChatVideoConference initialVideo={callType === 'video'} />
+                  <ChatVideoConference initialVideo={activeCall.type === 'video'} />
                   <RoomAudioRenderer />
                 </LiveKitRoom>
               </div>

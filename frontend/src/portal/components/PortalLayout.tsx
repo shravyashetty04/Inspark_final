@@ -11,12 +11,17 @@ import {
   X,
   IndianRupee,
   Video,
-  MessageSquare
+  MessageSquare,
+  Phone,
+  PhoneIncoming,
+  PhoneOff
 } from 'lucide-react';
 import { useState } from 'react';
+import { useCall } from '../CallContext';
 
 export default function PortalLayout() {
   const { profile, logout } = useAuth();
+  const { incomingCall, acceptCall, rejectCall } = useCall();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -129,6 +134,38 @@ export default function PortalLayout() {
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 md:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
+      )}
+
+      {/* Incoming Call Modal */}
+      {incomingCall && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-[#1a1b3b] border border-white/10 p-8 rounded-3xl max-w-sm w-full text-center shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="w-24 h-24 bg-gradient-to-tr from-[#7C3AED] to-[#9333EA] rounded-full mx-auto mb-6 flex items-center justify-center shadow-lg shadow-purple-500/20 relative">
+              <div className="absolute inset-0 rounded-full border-2 border-purple-500 animate-ping opacity-75"></div>
+              <PhoneIncoming size={40} className="text-white" />
+            </div>
+            
+            <h2 className="text-2xl font-bold text-white mb-2">Incoming {incomingCall.type === 'video' ? 'Video' : 'Audio'} Call</h2>
+            <p className="text-gray-400 mb-8">{incomingCall.callerName} is calling you...</p>
+            
+            <div className="flex items-center justify-center gap-6">
+              <button
+                onClick={rejectCall}
+                className="w-14 h-14 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white transition-all hover:scale-105 shadow-lg shadow-red-500/20"
+                title="Decline"
+              >
+                <PhoneOff size={24} />
+              </button>
+              <button
+                onClick={acceptCall}
+                className="w-16 h-16 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center text-white transition-all hover:scale-105 shadow-lg shadow-green-500/20 animate-pulse"
+                title="Accept"
+              >
+                {incomingCall.type === 'video' ? <Video size={28} /> : <Phone size={28} />}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

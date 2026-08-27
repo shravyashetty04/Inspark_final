@@ -18,11 +18,14 @@ import CompanyAttendance from './admin/CompanyAttendance';
 import LeaveApprovals from './admin/LeaveApprovals';
 import Payroll from './admin/Payroll';
 
+import { CallProvider } from './CallContext';
+
 export default function PortalApp() {
   return (
     <AuthProvider>
-      <Routes>
-        <Route path="/" element={<Navigate to="/portal/login" replace />} />
+      <CallProvider>
+        <Routes>
+          <Route path="/" element={<Navigate to="/portal/login" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         
@@ -45,7 +48,8 @@ export default function PortalApp() {
             </Route>
           </Route>
         </Route>
-      </Routes>
+        </Routes>
+      </CallProvider>
     </AuthProvider>
   );
 }
