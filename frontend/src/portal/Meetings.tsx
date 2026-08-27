@@ -59,16 +59,55 @@ export default function Meetings() {
   };
 
   const [showJoinInput, setShowJoinInput] = useState(false);
+  const [showSchedule, setShowSchedule] = useState(false);
+  
+  // Schedule state
+  const [scheduleTitle, setScheduleTitle] = useState('');
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('');
+  const [generatedInvite, setGeneratedInvite] = useState('');
 
   const createMeetingLink = () => {
     const randomName = 'InSpark-' + Math.random().toString(36).substring(2, 10);
     navigator.clipboard.writeText(randomName);
     toast.success('Meeting link copied! You can now share it.');
     setRoomName(randomName);
+    setShowJoinInput(false);
+    setShowSchedule(false);
   };
 
-  const scheduleMeeting = () => {
-    toast('Scheduling is coming soon!', { icon: '📅' });
+  const openSchedule = () => {
+    setShowSchedule(!showSchedule);
+    setShowJoinInput(false);
+    setGeneratedInvite('');
+  };
+
+  const openJoin = () => {
+    setShowJoinInput(!showJoinInput);
+    setShowSchedule(false);
+  };
+
+  const handleGenerateInvite = () => {
+    if (!scheduleTitle || !scheduleDate || !scheduleTime) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+    
+    const randomName = 'InSpark-' + Math.random().toString(36).substring(2, 10);
+    const dateObj = new Date(`${scheduleDate}T${scheduleTime}`);
+    const formattedDate = dateObj.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+    
+    const inviteText = `You have been invited to an InSpark Meeting.
+
+Title: ${scheduleTitle}
+Time: ${formattedDate}
+
+To join the meeting:
+1. Log in to the InSpark Portal and go to the "Meet" page
+2. Click "Join with a meeting ID"
+3. Enter Room ID: ${randomName}`;
+
+    setGeneratedInvite(inviteText);
   };
 
   if (inMeeting && token) {
@@ -136,7 +175,7 @@ export default function Meetings() {
           </button>
           
           <button 
-            onClick={scheduleMeeting}
+            onClick={openSchedule}
             className="w-full md:w-auto px-8 py-4 bg-[#2A2B2D] border border-[#3E3F42] hover:bg-[#343538] text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-3"
           >
             <Calendar size={20} className="text-pink-400" />
@@ -144,7 +183,7 @@ export default function Meetings() {
           </button>
           
           <button 
-            onClick={() => setShowJoinInput(!showJoinInput)}
+            onClick={openJoin}
             className="w-full md:w-auto px-8 py-4 bg-[#2A2B2D] border border-[#3E3F42] hover:bg-[#343538] text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-3"
           >
             <Hash size={20} className="text-blue-400" />
@@ -171,6 +210,85 @@ export default function Meetings() {
                 {loading ? <Loader2 className="animate-spin" size={18} /> : 'Join'}
               </button>
             </form>
+          </div>
+        )}
+        {showSchedule && (
+          <div className="mt-6 p-6 bg-[#1A1C1E] border border-white/5 rounded-xl max-w-lg animate-in slide-in-from-top-4 fade-in duration-200">
+            <h3 className="text-white font-medium mb-4">Schedule a Meeting</h3>
+            
+            {!generatedInvite ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Meeting Title</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Weekly Sync"
+                    value={scheduleTitle}
+                    onChange={(e) => setScheduleTitle(e.target.value)}
+                    className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-[#5458B3]"
+                  />
+                </div>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex-1">
+                    <label className="block text-sm text-gray-400 mb-1">Date</label>
+                    <input 
+                      type="date" 
+                      value={scheduleDate}
+                      onChange={(e) => setScheduleDate(e.target.value)}
+                      className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-[#5458B3]"
+                      style={{ colorScheme: 'dark' }}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm text-gray-400 mb-1">Time</label>
+                    <input 
+                      type="time" 
+                      value={scheduleTime}
+                      onChange={(e) => setScheduleTime(e.target.value)}
+                      className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-[#5458B3]"
+                      style={{ colorScheme: 'dark' }}
+                    />
+                  </div>
+                </div>
+                <button 
+                  onClick={handleGenerateInvite}
+                  className="w-full py-3 bg-[#5458B3] hover:bg-[#4a4d9e] text-white font-medium rounded-lg transition-colors mt-2"
+                >
+                  Generate Invitation
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="bg-black/40 border border-white/10 p-4 rounded-lg">
+                  <pre className="text-sm text-gray-300 whitespace-pre-wrap font-sans">
+                    {generatedInvite}
+                  </pre>
+                </div>
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText(generatedInvite);
+                      toast.success('Invitation copied to clipboard!');
+                    }}
+                    className="flex-1 py-2.5 bg-[#5458B3] hover:bg-[#4a4d9e] text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    Copy to Clipboard
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setGeneratedInvite('');
+                      setScheduleTitle('');
+                      setScheduleDate('');
+                      setScheduleTime('');
+                      setShowSchedule(false);
+                    }}
+                    className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg transition-colors"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
