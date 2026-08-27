@@ -48,7 +48,7 @@ export default function Payslip({ payrollData, onClose }: PayslipProps) {
           </div>
 
           {/* Employee Details */}
-          <div className="grid grid-cols-2 gap-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 mb-8">
             <div className="space-y-3">
               <div className="grid grid-cols-2 text-sm">
                 <span className="text-slate-500">Employee Name:</span>
@@ -80,7 +80,7 @@ export default function Payslip({ payrollData, onClose }: PayslipProps) {
           </div>
 
           {/* Salary Table */}
-          <div className="grid grid-cols-2 gap-8 mb-8 border border-slate-200 rounded-lg overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-2 md:gap-0 mb-8 border border-slate-200 rounded-lg overflow-hidden">
             {/* Earnings */}
             <div>
               <div className="bg-slate-100 p-3 font-bold border-b border-slate-200 text-slate-700">Earnings</div>
@@ -109,7 +109,7 @@ export default function Payslip({ payrollData, onClose }: PayslipProps) {
             </div>
 
             {/* Deductions */}
-            <div className="border-l border-slate-200">
+            <div className="border-t md:border-t-0 md:border-l border-slate-200">
               <div className="bg-slate-100 p-3 font-bold border-b border-slate-200 text-slate-700">Deductions</div>
               <div className="p-4 space-y-4">
                 <div className="flex justify-between text-sm">
@@ -137,7 +137,7 @@ export default function Payslip({ payrollData, onClose }: PayslipProps) {
           </div>
 
           {/* Net Salary & Signature */}
-          <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-6 mb-12 flex justify-between items-center">
+          <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4 md:p-6 mb-12 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <p className="text-sm font-semibold text-indigo-900 mb-1">Net Salary Payable</p>
               <p className="text-xs text-indigo-700/70">Amount transferred to registered bank account</p>
