@@ -34,6 +34,7 @@ export default function ChatPage() {
   // Local state for initiating a call to show spinner
   const [callInitiating, setCallInitiating] = useState<boolean>(false);
   const [initiatingType, setInitiatingType] = useState<'audio'|'video'|null>(null);
+  const [showChatInCall, setShowChatInCall] = useState(false);
 
   const handleCall = async (type: 'audio' | 'video') => {
     if (!activeChannel || !profile) return;
@@ -281,6 +282,55 @@ export default function ChatPage() {
   };
 
   // The local joinCall function is no longer needed since we use handleCall which calls startCall in context.
+
+  const renderChatContent = () => (
+    <>
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {messages.map((msg, idx) => {
+          const isMe = profile && msg.sender_id === profile.id;
+          const showHeader = idx === 0 || messages[idx-1].sender_id !== msg.sender_id;
+          
+          return (
+            <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+              {showHeader && (
+                <div className="text-xs text-gray-500 mb-1 ml-1 mr-1">
+                  {isMe ? 'You' : msg.sender?.full_name} • {formatTime(msg.created_at)}
+                </div>
+              )}
+              <div className={`px-5 py-3 rounded-2xl max-w-[75%] text-[15px] ${
+                isMe 
+                  ? 'bg-gradient-to-r from-[#7C3AED] to-[#9333EA] text-white rounded-br-sm' 
+                  : 'bg-white/10 text-gray-200 rounded-bl-sm'
+              }`}>
+                {msg.content}
+              </div>
+            </div>
+          );
+        })}
+        <div ref={messagesEndRef} />
+      </div>
+      
+      {/* Message Input */}
+      <div className="p-4 bg-[#11122a] border-t border-white/10">
+        <form onSubmit={sendMessage} className="relative flex items-center max-w-4xl mx-auto">
+          <input
+            type="text"
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder="Message..."
+            className="w-full bg-white/5 border border-white/10 text-white rounded-full pl-5 pr-14 py-3 focus:outline-none focus:border-purple-500 focus:bg-white/10 transition-all text-[14px]"
+          />
+          <button 
+            type="submit"
+            disabled={!newMessage.trim()}
+            className="absolute right-1.5 p-2 text-white bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:hover:bg-purple-600 transition-colors rounded-full"
+          >
+            <Send size={16} />
+          </button>
+        </form>
+      </div>
+    </>
+  );
 
   const createGroup = async () => {
     if (!profile || !groupName.trim() || selectedUsers.length === 0) return;
@@ -531,75 +581,45 @@ export default function ChatPage() {
             </div>
 
             {activeCall?.channelId === activeChannel.id && callToken ? (
-              <div className="flex-1 w-full bg-black relative flex flex-col border-b border-white/10">
-                <div className="absolute top-4 right-4 z-50">
-                  <button 
-                    onClick={endCall}
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors shadow-lg"
+              <div className="flex-1 flex flex-row overflow-hidden border-b border-white/10 relative">
+                <div className="flex-1 w-full bg-black relative flex flex-col">
+                  <div className="absolute top-4 right-4 z-50">
+                    <button 
+                      onClick={endCall}
+                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors shadow-lg"
+                    >
+                      End Call
+                    </button>
+                  </div>
+                  <LiveKitRoom
+                    video={activeCall.type === 'video'}
+                    audio={true}
+                    token={callToken}
+                    serverUrl={serverUrl}
+                    data-lk-theme="default"
+                    style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+                    onDisconnected={endCall}
                   >
-                    End Call
-                  </button>
+                    <ChatVideoConference 
+                      initialVideo={activeCall.type === 'video'} 
+                      onToggleChat={() => setShowChatInCall(!showChatInCall)}
+                      isChatOpen={showChatInCall}
+                    />
+                    <RoomAudioRenderer />
+                  </LiveKitRoom>
                 </div>
-                <LiveKitRoom
-                  video={activeCall.type === 'video'}
-                  audio={true}
-                  token={callToken}
-                  serverUrl={serverUrl}
-                  data-lk-theme="default"
-                  style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-                  onDisconnected={endCall}
-                >
-                  <ChatVideoConference initialVideo={activeCall.type === 'video'} />
-                  <RoomAudioRenderer />
-                </LiveKitRoom>
+                {showChatInCall && (
+                  <div className="w-80 md:w-96 flex flex-col bg-[#0C0E2B]/95 backdrop-blur-md border-l border-white/10 h-full absolute right-0 top-0 bottom-0 z-40 md:relative">
+                    <div className="p-3 border-b border-white/10 flex justify-between items-center md:hidden">
+                      <span className="text-white font-medium">Chat</span>
+                      <button onClick={() => setShowChatInCall(false)} className="text-gray-400 hover:text-white"><X size={20}/></button>
+                    </div>
+                    {renderChatContent()}
+                  </div>
+                )}
               </div>
             ) : (
-              <>
-                <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                {messages.map((msg, idx) => {
-                const isMe = msg.sender_id === profile.id;
-                const showHeader = idx === 0 || messages[idx-1].sender_id !== msg.sender_id;
-                
-                return (
-                  <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                    {showHeader && (
-                      <div className="text-xs text-gray-500 mb-1 ml-1 mr-1">
-                        {isMe ? 'You' : msg.sender?.full_name} • {formatTime(msg.created_at)}
-                      </div>
-                    )}
-                    <div className={`px-5 py-3 rounded-2xl max-w-[75%] text-[15px] ${
-                      isMe 
-                        ? 'bg-gradient-to-r from-[#7C3AED] to-[#9333EA] text-white rounded-br-sm' 
-                        : 'bg-white/10 text-gray-200 rounded-bl-sm'
-                    }`}>
-                      {msg.content}
-                    </div>
-                  </div>
-                );
-              })}
-              <div ref={messagesEndRef} />
-            </div>
-            
-            {/* Message Input */}
-            <div className="p-4 bg-[#11122a] border-t border-white/10">
-              <form onSubmit={sendMessage} className="relative flex items-center max-w-4xl mx-auto">
-                <input
-                  type="text"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Message..."
-                  className="w-full bg-white/5 border border-white/10 text-white rounded-full pl-5 pr-14 py-4 focus:outline-none focus:border-purple-500 focus:bg-white/10 transition-all text-[15px]"
-                />
-                <button 
-                  type="submit"
-                  disabled={!newMessage.trim()}
-                  className="absolute right-2 p-2.5 text-white bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:hover:bg-purple-600 transition-colors rounded-full"
-                >
-                  <Send size={18} />
-                </button>
-              </form>
-            </div>
-            </>
+              renderChatContent()
             )}
           </>
         ) : (
@@ -613,7 +633,7 @@ export default function ChatPage() {
   );
 }
 
-function ChatVideoConference({ initialVideo }: { initialVideo: boolean }) {
+function ChatVideoConference({ initialVideo, onToggleChat, isChatOpen }: { initialVideo: boolean, onToggleChat: () => void, isChatOpen: boolean }) {
   const tracks = useTracks(
     [
       { source: Track.Source.Camera, withPlaceholder: true },
@@ -630,13 +650,13 @@ function ChatVideoConference({ initialVideo }: { initialVideo: boolean }) {
         </GridLayout>
       </div>
       <div className="shrink-0 bg-[#0B0D21] py-4 border-t border-white/10 z-50">
-        <ChatControlBar initialVideo={initialVideo} />
+        <ChatControlBar initialVideo={initialVideo} onToggleChat={onToggleChat} isChatOpen={isChatOpen} />
       </div>
     </div>
   );
 }
 
-function ChatControlBar({ initialVideo }: { initialVideo: boolean }) {
+function ChatControlBar({ initialVideo, onToggleChat, isChatOpen }: { initialVideo: boolean, onToggleChat: () => void, isChatOpen: boolean }) {
   const { localParticipant } = useLocalParticipant();
   const [isMicOn, setIsMicOn] = useState(true);
   const [isCamOn, setIsCamOn] = useState(initialVideo);
@@ -695,8 +715,20 @@ function ChatControlBar({ initialVideo }: { initialVideo: boolean }) {
         className={`p-3 rounded-full flex items-center justify-center transition-colors ${
           isScreenOn ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-white/10 hover:bg-white/20 text-white'
         }`}
+        title="Share Screen"
       >
         <MonitorUp size={20} />
+      </button>
+
+      {/* Chat Toggle Button */}
+      <button 
+        onClick={onToggleChat}
+        className={`p-3 rounded-full flex items-center justify-center transition-colors ${
+          isChatOpen ? 'bg-purple-500 hover:bg-purple-600 text-white' : 'bg-white/10 hover:bg-white/20 text-white'
+        }`}
+        title="Toggle Chat"
+      >
+        <MessageSquare size={20} />
       </button>
     </div>
   );
