@@ -41,7 +41,10 @@ export default function PortalLayout() {
     { name: 'Company Attendance', path: '/portal/admin/attendance', icon: CalendarCheck },
     { name: 'Leave Approvals', path: '/portal/admin/leaves', icon: CalendarOff },
     { name: 'Payroll & Salary', path: '/portal/admin/payroll', icon: IndianRupee },
+    { name: '← Back to My Portal', path: '/portal/dashboard', icon: LayoutDashboard },
   ];
+
+  const isAdminRoute = location.pathname.startsWith('/portal/admin');
 
   const NavLinks = ({ items }: { items: any[] }) => (
     <>
@@ -87,10 +90,12 @@ export default function PortalLayout() {
         </div>
 
         <div className="flex-1 space-y-6">
-          <div className="space-y-1">
-            <div className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">My Portal</div>
-            <NavLinks items={navItems} />
-          </div>
+          {!isAdminRoute && (
+            <div className="space-y-1">
+              <div className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">My Portal</div>
+              <NavLinks items={navItems} />
+            </div>
+          )}
 
           {isAdmin && (
             <div className="space-y-1">
