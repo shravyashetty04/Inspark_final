@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LiveKitRoom, GridLayout, ParticipantTile, RoomAudioRenderer, useTracks, useLocalParticipant, Chat } from '@livekit/components-react';
+import { LiveKitRoom, GridLayout, ParticipantTile, RoomAudioRenderer, useTracks, useLocalParticipant, Chat, FocusLayout } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import '@livekit/components-styles';
 import { Video, ArrowRight, UserPlus, Loader2, Mic, MicOff, Camera, CameraOff, MonitorUp, MessageSquare, X, Link as LinkIcon, Calendar, Hash } from 'lucide-react';
@@ -319,14 +319,28 @@ function MyVideoConference() {
     ],
     { onlySubscribed: false },
   );
-  
+  const screenShareTrack = tracks.find(t => t.source === Track.Source.ScreenShare);
+
   return (
     <div className="flex flex-row h-full w-full relative">
       <div className="flex flex-col flex-1 h-full w-full">
-        <div className="flex-1 p-2 w-full h-full overflow-hidden">
-          <GridLayout tracks={tracks} style={{ height: '100%' }}>
-            <ParticipantTile />
-          </GridLayout>
+        <div className="flex-1 p-2 w-full h-full overflow-hidden flex flex-col md:flex-row gap-2">
+          {screenShareTrack ? (
+            <>
+              <div className="flex-[3] w-full h-full rounded-xl overflow-hidden shadow-lg border border-white/10 bg-black relative">
+                <FocusLayout trackRef={screenShareTrack} />
+              </div>
+              <div className="flex-1 min-w-[200px] h-full overflow-y-auto">
+                <GridLayout tracks={tracks.filter(t => t.publication?.trackSid !== screenShareTrack.publication?.trackSid)} style={{ height: '100%' }}>
+                  <ParticipantTile />
+                </GridLayout>
+              </div>
+            </>
+          ) : (
+            <GridLayout tracks={tracks} style={{ height: '100%' }}>
+              <ParticipantTile />
+            </GridLayout>
+          )}
         </div>
         <div className="shrink-0 bg-[#0B0D21] py-4 border-t border-white/10 z-50">
           <CustomControlBar onToggleChat={() => setShowChat(!showChat)} isChatOpen={showChat} />
