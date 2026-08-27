@@ -138,7 +138,22 @@ export default function ChatPage() {
       return channel;
     }));
 
-    setChannels(enrichedChannels);
+    // Deduplicate DMs (keep newest)
+    const uniqueChannels = [];
+    const dmUserIds = new Set<string>();
+
+    for (const channel of enrichedChannels) {
+      if (channel.type === 'direct' && channel.other_user) {
+        if (!dmUserIds.has(channel.other_user.id)) {
+          dmUserIds.add(channel.other_user.id);
+          uniqueChannels.push(channel);
+        }
+      } else {
+        uniqueChannels.push(channel);
+      }
+    }
+
+    setChannels(uniqueChannels as any);
   };
 
   const loadUsers = async () => {
