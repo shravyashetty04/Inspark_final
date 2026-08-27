@@ -396,3 +396,15 @@ body {
   .hero-image-container { display: none; }
   .process-line { display: none; }
 }
+
+/* LiveKit Overrides */
+.lk-participant-name,
+.lk-participant-metadata,
+.lk-icon {
+  color: white !important;
+}
+.lk-participant-metadata {
+  background: rgba(0, 0, 0, 0.5) !important;
+  border-radius: 4px;
+  padding: 4px 8px;
+}
