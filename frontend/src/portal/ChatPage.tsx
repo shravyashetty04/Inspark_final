@@ -591,22 +591,12 @@ export default function ChatPage() {
                       End Call
                     </button>
                   </div>
-                  <LiveKitRoom
-                    video={activeCall.type === 'video'}
-                    audio={true}
-                    token={callToken}
-                    serverUrl={serverUrl}
-                    data-lk-theme="default"
-                    style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-                    onDisconnected={endCall}
-                  >
                     <ChatVideoConference 
                       initialVideo={activeCall.type === 'video'} 
                       onToggleChat={() => setShowChatInCall(!showChatInCall)}
                       isChatOpen={showChatInCall}
                     />
                     <RoomAudioRenderer />
-                  </LiveKitRoom>
                 </div>
                 {showChatInCall && (
                   <div className="w-80 md:w-96 flex flex-col bg-[#0C0E2B]/95 backdrop-blur-md border-l border-white/10 h-full absolute right-0 top-0 bottom-0 z-40 md:relative">

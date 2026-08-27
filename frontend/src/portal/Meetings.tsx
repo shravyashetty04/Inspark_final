@@ -5,44 +5,18 @@ import '@livekit/components-styles';
 import { Video, ArrowRight, UserPlus, Loader2, Mic, MicOff, Camera, CameraOff, MonitorUp, MessageSquare, X, Link as LinkIcon, Calendar, Hash } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
+import { useCall } from './CallContext';
 
 export default function Meetings() {
   const { profile } = useAuth();
+  const { activeCall, joinMeeting, endCall } = useCall();
   const [roomName, setRoomName] = useState('');
-  const [inMeeting, setInMeeting] = useState(false);
-  const [token, setToken] = useState('');
   const [loading, setLoading] = useState(false);
-
-  // You must provide this in the .env file!
-  const serverUrl = import.meta.env.VITE_LIVEKIT_URL;
-
   const joinLiveKitRoom = async (room: string) => {
     if (!profile) return toast.error('You must be logged in');
     setLoading(true);
-    
-    try {
-      const response = await fetch('/api/meetings/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          roomName: room,
-          participantName: profile.full_name || profile.email
-        })
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to get token');
-      }
-
-      setToken(data.token);
-      setInMeeting(true);
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
-      setLoading(false);
-    }
+    await joinMeeting(room);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -124,16 +98,16 @@ Meeting link: ${meetingLink}`;
     setGeneratedInvite(inviteText);
   };
 
-  if (inMeeting && token) {
+  if (activeCall && activeCall.isMeeting) {
     return (
       <div className="h-[650px] w-full bg-[#111] rounded-xl overflow-hidden relative border border-white/10 flex flex-col shadow-2xl">
         {/* Top Bar for Room Name & Actions */}
         <div className="bg-black/50 border-b border-white/10 p-4 flex items-center justify-between z-50">
           <div className="flex items-center gap-4">
-            <h2 className="text-white font-bold">Room: {roomName}</h2>
+            <h2 className="text-white font-bold">Room: {activeCall.roomName}</h2>
             <button 
               onClick={() => {
-                navigator.clipboard.writeText(roomName);
+                navigator.clipboard.writeText(activeCall.roomName || '');
                 toast.success('Room code copied! Send this to your team.');
               }}
               className="text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg transition-colors"
@@ -143,10 +117,7 @@ Meeting link: ${meetingLink}`;
           </div>
           
           <button 
-            onClick={() => {
-              setInMeeting(false);
-              setToken('');
-            }}
+            onClick={() => endCall()}
             className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors"
           >
             Leave Meeting
@@ -154,21 +125,8 @@ Meeting link: ${meetingLink}`;
         </div>
         
         <div className="flex-1 w-full relative overflow-hidden bg-black">
-          <LiveKitRoom
-            video={true}
-            audio={true}
-            token={token}
-            serverUrl={serverUrl}
-            data-lk-theme="default"
-            style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-            onDisconnected={() => {
-              setInMeeting(false);
-              setToken('');
-            }}
-          >
-            <MyVideoConference />
-            <RoomAudioRenderer />
-          </LiveKitRoom>
+          <MyVideoConference />
+          <RoomAudioRenderer />
         </div>
       </div>
     );

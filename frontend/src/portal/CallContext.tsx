@@ -3,6 +3,8 @@ import { useAuth } from './AuthContext';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { LiveKitRoom } from '@livekit/components-react';
+import '@livekit/components-styles';
 
 export type CallType = 'audio' | 'video';
 
@@ -11,6 +13,8 @@ export interface CallDetails {
   callerId: string;
   callerName: string;
   type: CallType;
+  isMeeting?: boolean;
+  roomName?: string;
 }
 
 interface CallContextType {
@@ -21,6 +25,7 @@ interface CallContextType {
   acceptCall: () => Promise<void>;
   rejectCall: () => void;
   endCall: () => void;
+  joinMeeting: (roomName: string) => Promise<void>;
 }
 
 const CallContext = createContext<CallContextType | undefined>(undefined);
@@ -220,9 +225,43 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
     setCallToken(null);
   };
 
+  const joinMeeting = async (roomName: string) => {
+    if (!profile) return;
+    try {
+      const token = await fetchToken(roomName, profile.full_name || profile.email);
+      setCallToken(token);
+      setActiveCall({
+        channelId: roomName,
+        callerId: profile.id,
+        callerName: roomName,
+        type: 'video',
+        isMeeting: true,
+        roomName: roomName
+      });
+      navigate(`/portal/meetings?room=${roomName}`);
+    } catch (error: any) {
+      toast.error('Failed to join meeting: ' + error.message);
+    }
+  };
+
+  const serverUrl = import.meta.env.VITE_LIVEKIT_URL;
+
   return (
-    <CallContext.Provider value={{ incomingCall, activeCall, callToken, startCall, acceptCall, rejectCall, endCall }}>
-      {children}
+    <CallContext.Provider value={{ incomingCall, activeCall, callToken, startCall, acceptCall, rejectCall, endCall, joinMeeting }}>
+      <LiveKitRoom
+        video={activeCall?.type === 'video'}
+        audio={true}
+        token={callToken || ''}
+        serverUrl={serverUrl}
+        connect={!!callToken}
+        style={{ display: 'contents' }}
+        onDisconnected={() => {
+          setActiveCall(null);
+          setCallToken(null);
+        }}
+      >
+        {children}
+      </LiveKitRoom>
     </CallContext.Provider>
   );
 }

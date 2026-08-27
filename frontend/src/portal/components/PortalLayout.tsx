@@ -22,9 +22,13 @@ import { useCall } from '../CallContext';
 
 export default function PortalLayout() {
   const { profile, logout } = useAuth();
-  const { incomingCall, acceptCall, rejectCall } = useCall();
+  const { incomingCall, acceptCall, rejectCall, activeCall, endCall } = useCall();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const isCallPageActive = activeCall?.isMeeting 
+    ? location.pathname.includes('/meetings') 
+    : location.pathname.includes('/chat');
 
   const isAdmin = profile?.role === 'admin' || profile?.role === 'hr';
 
@@ -130,6 +134,31 @@ export default function PortalLayout() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-h-0 relative">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#7C3AED]/10 via-transparent to-transparent pointer-events-none"></div>
+        
+        {/* Global Call Banner */}
+        {activeCall && !isCallPageActive && (
+          <div className="w-full bg-indigo-600 border-b border-white/10 px-4 py-3 flex items-center justify-between z-40 shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+              <span className="text-white font-medium">Call in Progress: {activeCall.callerName}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link 
+                to={activeCall.isMeeting ? `/portal/meetings?room=${activeCall.roomName}` : '/portal/chat'}
+                className="px-4 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                Return to Call
+              </Link>
+              <button 
+                onClick={endCall}
+                className="px-4 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                End Call
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="flex-1 overflow-y-auto p-4 md:p-8 relative z-10">
           <Outlet />
         </div>
