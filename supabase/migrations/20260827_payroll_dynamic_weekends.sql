@@ -17,9 +17,11 @@ WHERE NOT EXISTS (SELECT 1 FROM public.company_settings);
 -- RLS
 ALTER TABLE public.company_settings ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow authenticated read company settings" ON public.company_settings;
 CREATE POLICY "Allow authenticated read company settings" ON public.company_settings 
 FOR SELECT USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Allow admin update company settings" ON public.company_settings;
 CREATE POLICY "Allow admin update company settings" ON public.company_settings 
 FOR ALL USING (
   EXISTS (
