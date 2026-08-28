@@ -134,35 +134,35 @@ export default function Employees() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="text-orange-200/50 text-xs uppercase tracking-wider border-b border-orange-500/20">
-                  <th className="p-3 font-semibold">Applicant</th>
-                  <th className="p-3 font-semibold">Contact & Address</th>
-                  <th className="p-3 font-semibold text-center">ID Proof</th>
-                  <th className="p-3 font-semibold text-right">Actions</th>
+                  <th className="p-3 font-semibold whitespace-nowrap">Applicant</th>
+                  <th className="p-3 font-semibold whitespace-nowrap">Contact & Address</th>
+                  <th className="p-3 font-semibold text-center whitespace-nowrap">ID Proof</th>
+                  <th className="p-3 font-semibold text-right whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-orange-500/10">
                 {pendingRequests.map((req) => (
                   <tr key={req.id} className="text-white">
-                    <td className="p-3">
-                      <div className="font-bold">{req.full_name}</div>
-                      <div className="text-xs text-orange-200">{req.email}</div>
+                    <td className="p-3 whitespace-nowrap min-w-[150px]">
+                      <div className="font-bold truncate">{req.full_name}</div>
+                      <div className="text-xs text-orange-200 truncate">{req.email}</div>
                     </td>
-                    <td className="p-3 text-xs text-gray-300">
+                    <td className="p-3 text-xs text-gray-300 min-w-[180px] whitespace-nowrap">
                       <div><span className="text-gray-500">DOB:</span> {req.dob}</div>
                       <div><span className="text-gray-500">Phone:</span> {req.emergency_contact}</div>
                       <div className="truncate max-w-[150px]" title={req.current_address}><span className="text-gray-500">Addr:</span> {req.current_address}</div>
                     </td>
-                    <td className="p-3 text-center">
-                      <a href={req.id_proof_url} target="_blank" rel="noreferrer" className="inline-flex p-2 rounded-xl bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 transition-colors" title="View ID Proof">
+                    <td className="p-3 text-center whitespace-nowrap">
+                      <a href={req.id_proof_url} target="_blank" rel="noreferrer" className="inline-flex p-2 rounded-xl bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 transition-colors shrink-0" title="View ID Proof">
                         <FileText size={18} />
                       </a>
                     </td>
-                    <td className="p-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => handleApprove(req.id)} className="p-2 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 rounded-xl transition-colors" title="Approve & Send Credentials">
+                    <td className="p-3 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-2 shrink-0">
+                        <button onClick={() => handleApprove(req.id)} className="p-2 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 rounded-xl transition-colors shrink-0" title="Approve & Send Credentials">
                           <Check size={18} />
                         </button>
-                        <button onClick={() => handleReject(req.id)} className="p-2 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-xl transition-colors" title="Reject Application">
+                        <button onClick={() => handleReject(req.id)} className="p-2 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-xl transition-colors shrink-0" title="Reject Application">
                           <X size={18} />
                         </button>
                       </div>
@@ -181,11 +181,11 @@ export default function Employees() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-white/5 text-[#cbd5e1] text-sm uppercase tracking-wider border-b border-white/10">
-                <th className="p-4 font-semibold">Employee</th>
-                <th className="p-4 font-semibold">Contact & Address</th>
-                <th className="p-4 font-semibold">Role, Desig & Salary</th>
-                <th className="p-4 font-semibold text-center">ID Proof</th>
-                <th className="p-4 font-semibold">Status</th>
+                <th className="p-4 font-semibold whitespace-nowrap">Employee</th>
+                <th className="p-4 font-semibold whitespace-nowrap">Contact & Address</th>
+                <th className="p-4 font-semibold whitespace-nowrap">Role, Desig & Salary</th>
+                <th className="p-4 font-semibold text-center whitespace-nowrap">ID Proof</th>
+                <th className="p-4 font-semibold whitespace-nowrap">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -196,24 +196,24 @@ export default function Employees() {
               ) : (
                 activeEmployees.map((emp) => (
                   <tr key={emp.id} className="hover:bg-white/5 transition-colors text-white">
-                    <td className="p-4">
+                    <td className="p-4 whitespace-nowrap min-w-[200px]">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#7C3AED] to-[#9333EA] flex items-center justify-center font-bold text-sm">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#7C3AED] to-[#9333EA] flex items-center justify-center font-bold text-sm shrink-0">
                           {emp.full_name?.charAt(0) || <User size={16} />}
                         </div>
-                        <div>
-                          <div className="font-bold">{emp.full_name}</div>
-                          <div className="text-xs text-gray-400">{emp.employee_id || 'No ID'}</div>
-                          <div className="text-xs text-indigo-300">{emp.email}</div>
+                        <div className="overflow-hidden">
+                          <div className="font-bold truncate">{emp.full_name}</div>
+                          <div className="text-xs text-gray-400 truncate">{emp.employee_id || 'No ID'}</div>
+                          <div className="text-xs text-indigo-300 truncate">{emp.email}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="p-4 text-xs text-gray-300">
+                    <td className="p-4 text-xs text-gray-300 min-w-[200px] whitespace-nowrap">
                       <div><span className="text-gray-500">DOB:</span> {emp.dob || 'N/A'}</div>
                       <div><span className="text-gray-500">Phone:</span> {emp.emergency_contact || 'N/A'}</div>
                       <div className="truncate max-w-[150px]" title={emp.current_address}><span className="text-gray-500">Addr:</span> {emp.current_address || 'N/A'}</div>
                     </td>
-                    <td className="p-4 space-y-2">
+                    <td className="p-4 space-y-2 min-w-[160px]">
                       <select 
                         value={emp.role}
                         onChange={(e) => updateRole(emp.id, e.target.value)}
@@ -225,7 +225,7 @@ export default function Employees() {
                       </select>
                       <input 
                         type="text"
-                        placeholder="Designation (e.g. Software Engineer)"
+                        placeholder="Designation"
                         defaultValue={emp.designation}
                         onBlur={(e) => updateDesignation(emp.id, e.target.value)}
                         className="w-full bg-black/30 border border-white/10 rounded py-1 px-2 text-xs text-white focus:outline-none placeholder:text-gray-600"
@@ -238,7 +238,7 @@ export default function Employees() {
                         className="w-full bg-black/30 border border-white/10 rounded py-1 px-2 text-xs text-white focus:outline-none placeholder:text-gray-600"
                       />
                     </td>
-                    <td className="p-4 text-center">
+                    <td className="p-4 text-center whitespace-nowrap">
                       {emp.id_proof_url ? (
                         <a href={emp.id_proof_url} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center p-2 rounded-xl bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors" title="View ID Proof">
                           <FileText size={20} />
@@ -247,20 +247,20 @@ export default function Employees() {
                         <span className="text-xs text-gray-500">None</span>
                       )}
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
                         {emp.status === 'ACTIVE' || emp.is_approved ? (
-                          <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/20">
+                          <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 shrink-0">
                             Active
                           </span>
                         ) : (
-                          <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/20">
+                          <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/20 shrink-0">
                             Rejected
                           </span>
                         )}
                         <button 
                           onClick={() => deleteEmployee(emp.id)}
-                          className="p-2 text-red-500/70 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                          className="p-2 text-red-500/70 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all shrink-0"
                           title="Remove Employee"
                         >
                           <Trash2 size={18} />
