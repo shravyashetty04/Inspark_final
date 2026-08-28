@@ -152,7 +152,8 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
   }, [profile, activeCall, incomingCall]);
 
   const fetchToken = async (roomName: string, participantName: string) => {
-    const response = await fetch('/api/meetings/token', {
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    const response = await fetch(`${apiUrl}/api/meetings/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ roomName, participantName })

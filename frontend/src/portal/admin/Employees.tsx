@@ -46,7 +46,8 @@ export default function Employees() {
   const handleApprove = async (id: string) => {
     const loadingToast = toast.loading('Generating credentials and sending email...');
     try {
-      const response = await fetch('/api/auth/approve', {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const response = await fetch(`${apiUrl}/api/auth/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ request_id: id })
@@ -64,7 +65,8 @@ export default function Employees() {
 
   const handleReject = async (id: string) => {
     try {
-      const response = await fetch('/api/auth/reject', {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const response = await fetch(`${apiUrl}/api/auth/reject`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ request_id: id })

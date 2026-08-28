@@ -29,7 +29,9 @@ export default function Dashboard() {
       .select('*')
       .eq('employee_id', profile.id)
       .eq('date', today)
-      .single();
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     if (data) {
       setTodayRecord(data);
