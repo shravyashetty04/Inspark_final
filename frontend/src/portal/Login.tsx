@@ -23,7 +23,7 @@ export default function Login() {
           .from('employee_profiles')
           .select('email, status')
           .eq('employee_id', identifier.toUpperCase())
-          .single();
+          .maybeSingle();
           
         if (fetchError || !profile) {
           throw new Error('Invalid Employee ID/email or password.'); // Generic error to hide info
@@ -38,7 +38,7 @@ export default function Login() {
            .from('onboarding_requests')
            .select('status')
            .eq('email', loginEmail)
-           .single();
+           .maybeSingle();
          
          if (pendingReq && pendingReq.status === 'PENDING_ADMIN_APPROVAL') {
            throw new Error('Your onboarding is currently awaiting admin approval.');
@@ -59,7 +59,7 @@ export default function Login() {
         .from('employee_profiles')
         .select('status, role, must_change_password')
         .eq('id', data.user.id)
-        .single();
+        .maybeSingle();
         
       if (profileData?.status === 'REJECTED') {
         await supabase.auth.signOut();
