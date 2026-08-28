@@ -15,6 +15,13 @@ export default function Meetings() {
   const joinLiveKitRoom = async (room: string) => {
     if (!profile) return toast.error('You must be logged in');
     setLoading(true);
+    
+    // Ensure URL has the room code so refreshes work!
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get('room') !== room) {
+      window.history.replaceState({}, '', `${window.location.pathname}?room=${room}`);
+    }
+    
     await joinMeeting(room);
     setLoading(false);
   };
@@ -25,9 +32,6 @@ export default function Meetings() {
     if (roomParam && profile) {
       setRoomName(roomParam);
       joinLiveKitRoom(roomParam);
-      
-      // Clean up URL to hide the room code
-      window.history.replaceState({}, '', window.location.pathname);
     }
   }, [profile]);
 
