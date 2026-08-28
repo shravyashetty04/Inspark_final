@@ -635,21 +635,18 @@ function ChatVideoConference({ initialVideo, onToggleChat, isChatOpen }: { initi
   const screenShareTrack = tracks.find(t => t.source === Track.Source.ScreenShare);
 
   useEffect(() => {
-    const handleVisibilityChange = async () => {
-      if (document.hidden && !document.pictureInPictureElement) {
-        const videos = Array.from(document.querySelectorAll('video'));
-        // Find the active remote video if possible, else just the first one
-        const targetVideo = videos.find(v => v.srcObject && (v.srcObject as MediaStream).active) || videos[0];
-        if (targetVideo) {
-          try { await targetVideo.requestPictureInPicture(); } catch (e) {}
+    // Automatically add 'autopictureinpicture' to all video elements so the browser 
+    // natively handles PiP on minimize without running into user-gesture restrictions.
+    const interval = setInterval(() => {
+      const videos = document.querySelectorAll('video');
+      videos.forEach(v => {
+        if (!v.hasAttribute('autopictureinpicture')) {
+          v.setAttribute('autopictureinpicture', 'true');
         }
-      } else if (!document.hidden && document.pictureInPictureElement) {
-        try { await document.exitPictureInPicture(); } catch (e) {}
-      }
-    };
+      });
+    }, 1000);
     
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    return () => clearInterval(interval);
   }, []);
 
   return (
