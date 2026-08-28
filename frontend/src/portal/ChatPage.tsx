@@ -434,7 +434,7 @@ export default function ChatPage() {
             </div>
           </>
         ) : view === 'new_dm' ? (
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             <div className="p-4 border-b border-white/5 flex gap-2 items-center">
               <button onClick={() => setView('channels')} className="text-gray-400 hover:text-white">
                 ←
@@ -469,7 +469,7 @@ export default function ChatPage() {
             </div>
           </div>
         ) : view === 'new_group' ? (
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             <div className="p-4 border-b border-white/5 flex flex-col gap-3">
               <div className="flex items-center gap-2">
                 <button onClick={() => setView('channels')} className="text-gray-400 hover:text-white">
