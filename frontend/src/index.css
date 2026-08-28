@@ -408,3 +408,10 @@ body {
   border-radius: 4px;
   padding: 4px 8px;
 }
+
+.lk-chat-header {
+  color: white !important;
+  justify-content: center !important;
+  font-weight: 600 !important;
+  font-size: 1.125rem !important;
+}
