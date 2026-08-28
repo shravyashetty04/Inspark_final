@@ -123,6 +123,19 @@ export default function LeaveManagement() {
           <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur-xl shadow-xl">
             <h2 className="text-lg font-bold text-white mb-6">Apply for Leave</h2>
             
+            {profile && (
+              <div className="flex gap-4 mb-6">
+                <div className="flex-1 bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-3 text-center">
+                  <p className="text-xs text-indigo-300 uppercase tracking-wider mb-1">Casual Balance</p>
+                  <p className="text-xl font-bold text-indigo-400">{profile.casual_leave_balance}</p>
+                </div>
+                <div className="flex-1 bg-purple-500/10 border border-purple-500/20 rounded-xl p-3 text-center">
+                  <p className="text-xs text-purple-300 uppercase tracking-wider mb-1">Sick Balance</p>
+                  <p className="text-xl font-bold text-purple-400">{profile.sick_leave_balance}</p>
+                </div>
+              </div>
+            )}
+            
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-300">Leave Type</label>
@@ -132,10 +145,9 @@ export default function LeaveManagement() {
                   onChange={handleInputChange}
                   className="w-full bg-black/20 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none"
                 >
-                  <option value="casual" className="bg-gray-900">Casual Leave</option>
+                  <option value="casual" className="bg-gray-900">Casual / Paid Leave</option>
                   <option value="sick" className="bg-gray-900">Sick Leave</option>
-                  <option value="earned" className="bg-gray-900">Emergency Leave</option>
-                  <option value="other" className="bg-gray-900">Other</option>
+                  <option value="other" className="bg-gray-900">Other / Unpaid</option>
                 </select>
               </div>
 
@@ -205,6 +217,29 @@ export default function LeaveManagement() {
                   placeholder="Please specify the exact reason..."
                 ></textarea>
               </div>
+
+              {(() => {
+                if (!formData.startDate || !formData.endDate) return null;
+                const start = new Date(formData.startDate);
+                const end = new Date(formData.endDate);
+                let diffDays = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                
+                const balance = formData.type === 'casual' ? profile?.casual_leave_balance || 0 : 
+                                formData.type === 'sick' ? profile?.sick_leave_balance || 0 : 0;
+                
+                if (diffDays > balance) {
+                  return (
+                    <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-lg flex gap-2 text-red-200 mt-4 text-sm">
+                      <AlertCircle size={16} className="shrink-0 mt-0.5 text-red-400" />
+                      <div>
+                        <strong>Warning: Loss of Pay (LOP)</strong>
+                        <p>You are requesting {diffDays} days but only have {balance} days of balance. {diffDays - balance} day(s) will be processed as Loss of Pay.</p>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
 
               <button
                 type="submit"

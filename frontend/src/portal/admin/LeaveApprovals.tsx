@@ -40,24 +40,45 @@ export default function LeaveApprovals() {
         .eq('id', id);
       if (error) throw error;
 
-      // 2. If approved, deduct the leave balance (except for 'other' leaves)
-      if (status === 'approved' && type !== 'other') {
-        const balanceField = `${type}_leave_balance`;
-        
-        // Fetch current balance
-        const { data: profile } = await supabase
-          .from('employee_profiles')
-          .select(balanceField)
-          .eq('id', employee_id)
-          .single();
+      // 2. Calculate LOP days and update balances
+      let lopDays = 0;
+
+      if (status === 'approved') {
+        if (type !== 'other') {
+          const balanceField = `${type}_leave_balance`;
           
-        if (profile) {
-          const newBalance = profile[balanceField] - days;
-          await supabase
+          // Fetch current balance
+          const { data: profile } = await supabase
             .from('employee_profiles')
-            .update({ [balanceField]: newBalance })
-            .eq('id', employee_id);
+            .select(balanceField)
+            .eq('id', employee_id)
+            .single();
+            
+          if (profile) {
+            const currentBalance = profile[balanceField] || 0;
+            if (days > currentBalance) {
+              lopDays = days - currentBalance;
+              await supabase
+                .from('employee_profiles')
+                .update({ [balanceField]: 0 })
+                .eq('id', employee_id);
+            } else {
+              await supabase
+                .from('employee_profiles')
+                .update({ [balanceField]: currentBalance - days })
+                .eq('id', employee_id);
+            }
+          }
+        } else {
+          // 'other' leave type implies completely unpaid
+          lopDays = days;
         }
+
+        // Update the lop_days in leave_requests
+        await supabase
+          .from('leave_requests')
+          .update({ lop_days: lopDays })
+          .eq('id', id);
       }
 
       toast.success(`Leave request ${status}`);

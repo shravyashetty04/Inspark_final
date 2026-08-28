@@ -278,6 +278,23 @@ function MyVideoConference() {
   );
   const screenShareTrack = tracks.find(t => t.source === Track.Source.ScreenShare);
 
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.hidden && !document.pictureInPictureElement) {
+        const videos = Array.from(document.querySelectorAll('video'));
+        const targetVideo = videos.find(v => v.srcObject && (v.srcObject as MediaStream).active) || videos[0];
+        if (targetVideo) {
+          try { await targetVideo.requestPictureInPicture(); } catch (e) {}
+        }
+      } else if (!document.hidden && document.pictureInPictureElement) {
+        try { await document.exitPictureInPicture(); } catch (e) {}
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   return (
     <div className="flex flex-row h-full w-full relative">
       <div className="flex flex-col flex-1 h-full w-full">

@@ -30,29 +30,29 @@ function GlobalFloatingVideoInner({ activeCall, endCall }: { activeCall: any, en
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
-    let intervalId: any;
-    
-    const attemptPiP = async () => {
+    // If the browser supports PiP, we can listen for visibility changes to auto-pip
+    const handleVisibilityChange = async () => {
       if (!containerRef.current) return;
       const videoEl = containerRef.current.querySelector('video');
-      
-      // Only attempt if video exists, has loaded data, and not already in PiP
-      if (videoEl && videoEl.readyState >= 1 && !document.pictureInPictureElement) {
+      if (!videoEl) return;
+
+      if (document.hidden && !document.pictureInPictureElement) {
         try {
           await videoEl.requestPictureInPicture();
-          clearInterval(intervalId);
-        } catch (error) {
-          console.error('Auto PiP failed:', error);
-          // If it fails (e.g. due to user gesture requirement), stop polling
-          clearInterval(intervalId);
+        } catch (err) {
+          console.error('Auto PiP failed:', err);
+        }
+      } else if (!document.hidden && document.pictureInPictureElement) {
+        try {
+          await document.exitPictureInPicture();
+        } catch (err) {
+          console.error('Exit PiP failed:', err);
         }
       }
     };
 
-    // Poll until the video element is ready
-    intervalId = setInterval(attemptPiP, 500);
-
-    return () => clearInterval(intervalId);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [targetParticipant]);
 
   if (!targetParticipant) return null;

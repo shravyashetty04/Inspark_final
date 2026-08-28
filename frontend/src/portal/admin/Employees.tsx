@@ -97,6 +97,14 @@ export default function Employees() {
     } catch (error: any) { toast.error(error.message); }
   };
 
+  const updateDesignation = async (id: string, designation: string) => {
+    try {
+      const { error } = await supabase.from('employee_profiles').update({ designation }).eq('id', id);
+      if (error) throw error;
+      toast.success('Designation updated');
+    } catch (error: any) { toast.error(error.message); }
+  };
+
   const deleteEmployee = async (id: string) => {
     if (!window.confirm("Are you sure you want to remove this employee? This action cannot be undone.")) return;
     
@@ -175,7 +183,7 @@ export default function Employees() {
               <tr className="bg-white/5 text-[#cbd5e1] text-sm uppercase tracking-wider border-b border-white/10">
                 <th className="p-4 font-semibold">Employee</th>
                 <th className="p-4 font-semibold">Contact & Address</th>
-                <th className="p-4 font-semibold">Role & Salary</th>
+                <th className="p-4 font-semibold">Role, Desig & Salary</th>
                 <th className="p-4 font-semibold text-center">ID Proof</th>
                 <th className="p-4 font-semibold">Status</th>
               </tr>
@@ -215,6 +223,13 @@ export default function Employees() {
                         <option value="hr">HR</option>
                         <option value="admin">Admin</option>
                       </select>
+                      <input 
+                        type="text"
+                        placeholder="Designation (e.g. Software Engineer)"
+                        defaultValue={emp.designation}
+                        onBlur={(e) => updateDesignation(emp.id, e.target.value)}
+                        className="w-full bg-black/30 border border-white/10 rounded py-1 px-2 text-xs text-white focus:outline-none placeholder:text-gray-600"
+                      />
                       <input 
                         type="number"
                         placeholder="Base Salary"

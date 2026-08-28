@@ -385,8 +385,8 @@ export default function ChatPage() {
       
       {/* Sidebar / Channels List */}
       <div className={`w-80 border-r border-white/10 flex flex-col ${activeChannel ? 'hidden md:flex' : 'flex'}`}>
-        <div className="bg-[#11122a] p-4 border-b border-white/10 flex items-center justify-between">
-          <div className="font-semibold text-white text-lg">Messages</div>
+        <div className="bg-[#11122a] p-4 border-b border-white/10 flex items-center justify-center">
+          <div className="font-semibold text-white text-xl text-center w-full tracking-wide">Messages</div>
         </div>
 
         {view === 'channels' ? (
@@ -633,6 +633,24 @@ function ChatVideoConference({ initialVideo, onToggleChat, isChatOpen }: { initi
   );
   
   const screenShareTrack = tracks.find(t => t.source === Track.Source.ScreenShare);
+
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.hidden && !document.pictureInPictureElement) {
+        const videos = Array.from(document.querySelectorAll('video'));
+        // Find the active remote video if possible, else just the first one
+        const targetVideo = videos.find(v => v.srcObject && (v.srcObject as MediaStream).active) || videos[0];
+        if (targetVideo) {
+          try { await targetVideo.requestPictureInPicture(); } catch (e) {}
+        }
+      } else if (!document.hidden && document.pictureInPictureElement) {
+        try { await document.exitPictureInPicture(); } catch (e) {}
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   return (
     <div className="flex flex-col h-full w-full">

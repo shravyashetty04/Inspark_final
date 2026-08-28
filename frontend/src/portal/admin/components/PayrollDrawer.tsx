@@ -183,9 +183,10 @@ export default function PayrollDrawer({ isOpen, onClose, employeeData, payrollRe
                   {editingStructure ? (
                     <input
                       type="number"
-                      value={structure[key]}
-                      onChange={(e) => setStructure({...structure, [key]: parseFloat(e.target.value) || 0})}
+                      value={structure[key] === 0 ? '' : structure[key]}
+                      onChange={(e) => setStructure({...structure, [key]: e.target.value === '' ? 0 : parseFloat(e.target.value)})}
                       className="w-full bg-black/40 border border-white/20 rounded-lg p-2 text-white focus:outline-none focus:border-indigo-500"
+                      placeholder="0"
                     />
                   ) : (
                     <p className="font-medium text-slate-200">₹{Number(structure[key] || 0).toLocaleString()}</p>

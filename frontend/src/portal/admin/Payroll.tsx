@@ -75,9 +75,10 @@ export default function Payroll() {
     try {
       const [year, month] = selectedMonth.split('-');
       const dateForMonth = new Date(parseInt(year), parseInt(month) - 1, 1);
-      const calendarDays = getDaysInMonth(dateForMonth);
+      const actualCalendarDays = getDaysInMonth(dateForMonth);
+      const calendarDays = 30; // standard month for payslip & salary calculation
       const startDate = format(dateForMonth, 'yyyy-MM-dd');
-      const endDate = format(new Date(parseInt(year), parseInt(month) - 1, calendarDays), 'yyyy-MM-dd');
+      const endDate = format(new Date(parseInt(year), parseInt(month) - 1, actualCalendarDays), 'yyyy-MM-dd');
 
       // Fetch active government holidays for the month
       const { data: holidays } = await supabase
@@ -111,7 +112,7 @@ export default function Payroll() {
         }
       });
       
-      const expectedWorkingDays = calendarDays - weeklyOffCount - paidHolidayCount;
+      const expectedWorkingDays = actualCalendarDays - weeklyOffCount - paidHolidayCount;
 
       const newRecords = [];
 
@@ -139,25 +140,27 @@ export default function Payroll() {
         // Fetch Approved Leaves
         const { data: leaves } = await supabase
           .from('leave_requests')
-          .select('days')
+          .select('days, lop_days')
           .eq('employee_id', emp.id)
           .eq('status', 'approved')
           .gte('start_date', startDate)
           .lte('end_date', endDate);
 
-        const paidLeaves = leaves?.reduce((sum, l) => sum + l.days, 0) || 0;
+        const totalApprovedLeaves = leaves?.reduce((sum, l) => sum + l.days, 0) || 0;
+        const totalLopLeaves = leaves?.reduce((sum, l) => sum + (l.lop_days || 0), 0) || 0;
+        const paidLeaves = totalApprovedLeaves - totalLopLeaves;
         const presentDays = presentCount || 0;
         
         // Include weekly offs and government holidays as "paid" days automatically
         const totalEffectiveDays = presentDays + paidLeaves + weeklyOffCount + paidHolidayCount;
         
-        // Calculate LOP (Loss of Pay) based on calendar days, ensuring it never goes below 0
-        const lopDays = Math.max(0, calendarDays - totalEffectiveDays);
+        // Calculate LOP (Loss of Pay) based on actual calendar days, ensuring it never goes below 0
+        const lopDays = Math.max(0, actualCalendarDays - totalEffectiveDays);
         
         // Calculate Earnings
         const grossSalary = structure.basic_salary + structure.hra + structure.allowances;
-        // Daily rate based on exact calendar days in the month
-        const dailyRate = grossSalary / calendarDays;
+        // Daily rate based on standard 30 days month
+        const dailyRate = grossSalary / 30;
         const lopDeduction = lopDays * dailyRate;
         
         // Calculate Deductions

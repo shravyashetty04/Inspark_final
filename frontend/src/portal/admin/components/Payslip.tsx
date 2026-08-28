@@ -60,7 +60,7 @@ export default function Payslip({ payrollData, onClose }: PayslipProps) {
               </div>
               <div className="grid grid-cols-2 text-sm">
                 <span className="text-slate-500">Designation:</span>
-                <span className="font-semibold capitalize">{employee.role}</span>
+                <span className="font-semibold capitalize">{employee.designation || employee.role}</span>
               </div>
             </div>
             <div className="space-y-3">
