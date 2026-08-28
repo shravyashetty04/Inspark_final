@@ -3,7 +3,7 @@ import { useAuth } from './AuthContext';
 import { useCall } from './CallContext';
 import { useLocation } from 'react-router-dom';
 import { supabase, ChatChannel, ChatMessage, EmployeeProfile } from '../lib/supabase';
-import { X, Users, Search, Send, Plus, MessageSquare, Phone, Video, Mic, MicOff, Camera, CameraOff, MonitorUp, Loader2 } from 'lucide-react';
+import { X, Users, Search, Send, Plus, MessageSquare, Phone, Video, Mic, MicOff, Camera, CameraOff, MonitorUp, Loader2, Maximize2 } from 'lucide-react';
 import { LiveKitRoom, GridLayout, ParticipantTile, useTracks, useLocalParticipant, FocusLayout } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import '@livekit/components-styles';
@@ -685,21 +685,20 @@ function ChatControlBar({ initialVideo, onToggleChat, isChatOpen }: { initialVid
   // Initialize camera state based on call type
   useEffect(() => {
     if (localParticipant) {
-      localParticipant.setCameraEnabled(initialVideo);
+      setIsMicOn(localParticipant.isMicrophoneEnabled);
+      setIsCamOn(localParticipant.isCameraEnabled);
     }
-  }, [localParticipant, initialVideo]);
+  }, [localParticipant?.isMicrophoneEnabled, localParticipant?.isCameraEnabled]);
 
   const toggleMic = () => {
     if (localParticipant) {
       localParticipant.setMicrophoneEnabled(!isMicOn);
-      setIsMicOn(!isMicOn);
     }
   };
 
   const toggleCam = () => {
     if (localParticipant) {
       localParticipant.setCameraEnabled(!isCamOn);
-      setIsCamOn(!isCamOn);
     }
   };
 
@@ -707,6 +706,20 @@ function ChatControlBar({ initialVideo, onToggleChat, isChatOpen }: { initialVid
     if (localParticipant) {
       localParticipant.setScreenShareEnabled(!isScreenOn);
       setIsScreenOn(!isScreenOn);
+    }
+  };
+
+  const togglePiP = async () => {
+    if (document.pictureInPictureElement) {
+      await document.exitPictureInPicture();
+    } else {
+      const videos = Array.from(document.querySelectorAll('video'));
+      const targetVideo = videos.find(v => v.srcObject && (v.srcObject as MediaStream).active) || videos[0];
+      if (targetVideo) {
+        try { await targetVideo.requestPictureInPicture(); } catch (e) { toast.error('Failed to open PiP'); }
+      } else {
+        toast.error('No active video found');
+      }
     }
   };
 
@@ -738,6 +751,14 @@ function ChatControlBar({ initialVideo, onToggleChat, isChatOpen }: { initialVid
         title="Share Screen"
       >
         <MonitorUp size={20} />
+      </button>
+
+      <button 
+        onClick={togglePiP}
+        className="p-3 rounded-full flex items-center justify-center transition-colors bg-white/10 hover:bg-white/20 text-white"
+        title="Pop Out Video (Picture-in-Picture)"
+      >
+        <Maximize2 size={20} />
       </button>
 
       {/* Chat Toggle Button */}
