@@ -61,12 +61,18 @@ export interface ChatChannel {
   type: ChannelType;
   created_at: string;
   created_by: string | null;
+  meeting_id?: string | null;
+  last_message?: string | null;
+  last_message_at?: string | null;
+  updated_at?: string | null;
 }
 
 export interface ChatMember {
   channel_id: string;
   employee_id: string;
   joined_at: string;
+  unread_count?: number;
+  last_read_at?: string;
 }
 
 export interface ChatMessage {
@@ -74,5 +80,37 @@ export interface ChatMessage {
   channel_id: string;
   sender_id: string;
   content: string;
+  created_at: string;
+}
+
+export interface Meeting {
+  id: string;
+  title: string;
+  description: string | null;
+  organizer_id: string;
+  start_time: string;
+  end_time: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MeetingParticipant {
+  meeting_id: string;
+  employee_id: string;
+  status: string;
+  joined_at: string | null;
+  left_at: string | null;
+}
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  message: string | null;
+  related_meeting_id: string | null;
+  related_channel_id: string | null;
+  is_read: boolean;
   created_at: string;
 }

@@ -88,6 +88,15 @@ export default function ChatPage() {
     if (activeChannel && profile) {
       loadMessages(activeChannel.id);
       
+      // Reset unread count
+      supabase.from('chat_members')
+        .update({ unread_count: 0, last_read_at: new Date().toISOString() })
+        .eq('channel_id', activeChannel.id)
+        .eq('employee_id', profile.id)
+        .then();
+        
+      setChannels(prev => prev.map(c => c.id === activeChannel.id ? { ...c, unread_count: 0 } : c));
+      
       // Subscribe to new messages
       const subscription = supabase
         .channel(`public:chat_messages:channel_id=eq.${activeChannel.id}`)
@@ -106,6 +115,20 @@ export default function ChatPage() {
               } else {
                 setMessages(prev => [...prev, newMsg]);
               }
+              // Automatically mark as read if channel is active
+              if (newMsg.sender_id !== profile.id) {
+                supabase.from('chat_members')
+                  .update({ unread_count: 0, last_read_at: new Date().toISOString() })
+                  .eq('channel_id', activeChannel.id)
+                  .eq('employee_id', profile.id)
+                  .then();
+                
+                // Insert message read receipt
+                supabase.from('message_reads').insert({
+                  message_id: newMsg.id,
+                  employee_id: profile.id
+                }).then();
+              }
             });
         })
         .subscribe();
@@ -116,25 +139,40 @@ export default function ChatPage() {
     }
   }, [activeChannel, profile]);
 
+  // Realtime subscription for channel list ordering and unread counts
+  useEffect(() => {
+    if (!profile) return;
+    
+    const channelSub = supabase
+      .channel('chat_channels_updates')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chat_channels' }, () => {
+        loadChannels();
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chat_members', filter: `employee_id=eq.${profile.id}` }, () => {
+        loadChannels();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channelSub);
+    };
+  }, [profile]);
+
   const loadChannels = async () => {
     if (!profile) return;
     
     // Get channels where user is a member
     const { data: memberChannels, error: memberError } = await supabase
       .from('chat_members')
-      .select('channel_id')
+      .select('channel_id, unread_count')
       .eq('employee_id', profile.id);
 
-    if (memberError) {
-      console.error('Error fetching member channels:', memberError);
-      return;
-    }
-
-    if (!memberChannels || memberChannels.length === 0) {
+    if (memberError || !memberChannels || memberChannels.length === 0) {
       setChannels([]);
       return;
     }
 
+    const channelMap = new Map(memberChannels.map(mc => [mc.channel_id, mc.unread_count]));
     const channelIds = memberChannels.map(mc => mc.channel_id);
 
     // Get channel details
@@ -142,15 +180,21 @@ export default function ChatPage() {
       .from('chat_channels')
       .select('*')
       .in('id', channelIds)
-      .order('created_at', { ascending: false });
+      .order('last_message_at', { ascending: false, nullsFirst: false });
 
     if (channelsError) {
       console.error('Error fetching channels:', channelsError);
       return;
     }
 
+    // Merge unread counts
+    const mergedChannels = channelsData.map(c => ({
+      ...c,
+      unread_count: channelMap.get(c.id) || 0
+    }));
+
     // For direct messages, figure out who the other user is
-    const enrichedChannels = await Promise.all(channelsData.map(async (channel) => {
+    const enrichedChannels = await Promise.all(mergedChannels.map(async (channel) => {
       if (channel.type === 'direct') {
         const { data: otherMember } = await supabase
           .from('chat_members')
@@ -421,11 +465,25 @@ export default function ChatPage() {
                       {channel.type === 'direct' ? channel.other_user?.full_name.charAt(0) : <Users size={18} />}
                     </div>
                     <div className="flex-1 overflow-hidden">
-                      <div className="text-white text-sm font-medium truncate">
-                        {channel.type === 'direct' ? channel.other_user?.full_name : channel.name}
+                      <div className="flex justify-between items-center mb-0.5">
+                        <div className="text-white text-sm font-medium truncate">
+                          {channel.type === 'direct' ? channel.other_user?.full_name : channel.name}
+                        </div>
+                        {channel.last_message_at && (
+                          <div className={`text-xs ${channel.unread_count ? 'text-purple-400 font-medium' : 'text-gray-500'}`}>
+                            {formatTime(channel.last_message_at)}
+                          </div>
+                        )}
                       </div>
-                      <div className="text-gray-500 text-xs truncate">
-                        {channel.type === 'direct' ? channel.other_user?.department || 'Employee' : 'Group'}
+                      <div className="flex justify-between items-center">
+                        <div className={`text-xs truncate max-w-[85%] ${channel.unread_count ? 'text-white font-medium' : 'text-gray-500'}`}>
+                          {channel.last_message || (channel.type === 'direct' ? channel.other_user?.department || 'Employee' : 'Group')}
+                        </div>
+                        {channel.unread_count ? (
+                          <div className="bg-purple-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-lg">
+                            {channel.unread_count > 99 ? '99+' : channel.unread_count}
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   </button>

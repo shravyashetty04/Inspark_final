@@ -149,9 +149,12 @@ router.post('/register', async (req, res) => {
       `
     };
 
-    // We DON'T await this because Vercel has a strict 10s timeout on Hobby plan,
-    // and SMTP servers often take 5-15 seconds to connect, causing 504 Gateway Timeouts!
-    transporter.sendMail(mailOptions).catch(err => console.error("Email send failed:", err));
+    // We MUST await this on Vercel, because Vercel freezes the function immediately after res.send()
+    try {
+      await transporter.sendMail(mailOptions);
+    } catch (err) {
+      console.error("Email send failed:", err);
+    }
 
     res.status(200).json({ 
       message: 'Onboarding form submitted successfully! Your application is now Pending Admin Approval.' 
@@ -239,8 +242,12 @@ router.post('/approve', async (req, res) => {
       `
     };
 
-    // Send Credential Email to Employee (DON'T AWAIT to prevent Vercel Timeout)
-    transporter.sendMail(mailOptions).catch(err => console.error('Approval email failed:', err));
+    // We MUST await this on Vercel to ensure the email is actually sent before the function is frozen
+    try {
+      await transporter.sendMail(mailOptions);
+    } catch (err) {
+      console.error('Approval email failed:', err);
+    }
 
     // Return the credentials in the success message so the admin can manually copy them if the email fails!
     res.status(200).json({ 

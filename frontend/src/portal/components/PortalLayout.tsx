@@ -20,6 +20,7 @@ import {
 import { useState } from 'react';
 import { useCall } from '../CallContext';
 import GlobalFloatingVideo from './GlobalFloatingVideo';
+import NotificationsDropdown from './NotificationsDropdown';
 
 export default function PortalLayout() {
   const { profile, logout } = useAuth();
@@ -81,9 +82,12 @@ export default function PortalLayout() {
       {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between p-4 border-b border-white/10 bg-[#0C0E2B]/90 backdrop-blur-md sticky top-0 z-40">
         <img src="/logo.png" alt="InSpark" className="h-10 rounded-lg" />
-        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-white">
-          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        <div className="flex items-center gap-4">
+          <NotificationsDropdown />
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-white">
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </div>
 
       {/* Sidebar */}
@@ -136,6 +140,11 @@ export default function PortalLayout() {
       <main className="flex-1 flex flex-col min-h-0 relative">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#7C3AED]/10 via-transparent to-transparent pointer-events-none"></div>
         
+        {/* Top Header with Notifications (Desktop) */}
+        <div className="hidden md:flex justify-end p-6 pb-0 relative z-20">
+          <NotificationsDropdown />
+        </div>
+
         {/* Global Floating Video (replaces simple banner) */}
         {activeCall && !isCallPageActive && (
           <GlobalFloatingVideo activeCall={activeCall} endCall={endCall} />
